@@ -1,11 +1,9 @@
-ARG PYTHON_VERSION=3.12
-ARG CUDA_VERSION=13.1.1
-ARG UBUNTU_VERSION=24.04
+ARG PYTHON_IMAGE_VERSION=3.11
 ARG PROJECT_NAME
 
 # BUILDER STAGE #
 
-FROM python:${PYTHON_VERSION}-slim AS builder
+FROM python:${PYTHON_IMAGE_VERSION}-slim AS builder
 
 # Set environment variables to optimize Python
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -15,24 +13,21 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends gcc g++ default-libmysqlclient-dev pkg-config && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends gcc default-libmysqlclient-dev pkg-config
 
 COPY requirements.txt .
 COPY docker/app/requirements.txt base.requirements.txt
 
-RUN pip install --upgrade pip wheel && \
-    pip wheel --no-cache-dir \
-        -r requirements.txt \
-        -r base.requirements.txt \
-        -w /wheels
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt -r base.requirements.txt
 
-# RUNTIME STAGE #
+# FINAL STAGE #
 
-FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION}
+FROM python:${PYTHON_IMAGE_VERSION}-slim
 
 # Declare the ARG and pass it to ENV
-ARG PYTHON_VERSION
+ARG PYTHON_IMAGE_VERSION
+ENV PYTHON_IMAGE_VERSION=${PYTHON_IMAGE_VERSION}
 ARG PROJECT_NAME
 ENV PROJECT_NAME=${PROJECT_NAME}
 
@@ -41,20 +36,18 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends \
-        python${PYTHON_VERSION} python3-pip \
-        tini default-libmysqlclient-dev libgl1 libglib2.0-0 && \
+    apt-get install -y --no-install-recommends tini default-libmysqlclient-dev &&\
     apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install Python dependencies from the builder stage
-COPY --from=builder /wheels /wheels
-RUN pip install --no-cache-dir --break-system-packages /wheels/* && rm -rf /wheels
+# Copy the Python dependencies from the builder stage
+COPY --from=builder /usr/local/lib/python${PYTHON_IMAGE_VERSION}/site-packages/ /usr/local/lib/python${PYTHON_IMAGE_VERSION}/site-packages/
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Set the working directory
 
 RUN useradd -m -r appuser && \
     mkdir /app && \
-    chown -R appuser:appuser /app
+    chown -R appuser /app
 
 WORKDIR /app
 

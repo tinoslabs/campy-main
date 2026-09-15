@@ -1,6 +1,5 @@
 services:
   nginx:
-    # image: nginx:latest
     build:
       context: .
       dockerfile: ./docker/nginx/Dockerfile
@@ -32,7 +31,6 @@ services:
       - app
 
   app:
-    # image: app:latest
     # For the app service, we will create a custom image to install the necessary PHP extensions and setup proper permissions.
     build:
       context: .
@@ -41,7 +39,6 @@ services:
         - PROJECT_NAME=${PROJECT_NAME}
     restart: unless-stopped
     volumes:
-      - ./code:/app:rw
       - static_data:/app/staticfiles
       - media_data:/app/mediafiles
     env_file:
@@ -54,19 +51,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 6
-      start_period: 10s
 
   # db:
   #   image: postgres:16

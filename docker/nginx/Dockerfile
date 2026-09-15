@@ -1,8 +1,4 @@
-ARG DOMAIN
-
 FROM nginx:stable-alpine
-
-ENV DOMAIN=${DOMAIN}
 
 # Copy custom Nginx configuration
 COPY ./docker/nginx/includes /etc/nginx/includes
