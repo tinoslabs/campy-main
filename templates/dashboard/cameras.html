@@ -1,0 +1,70 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Cameras{% endblock %}
+{% block topbar_actions %}{% if 'cameras.manage' in user_permissions %}<a href="{% url 'dashboard:camera_create' %}" class="btn btn-sm btn-primary">＋ Add camera</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head row-between">
+  <div><h1>Cameras</h1><p class="subtitle">Every video source in this workspace.</p></div>
+  {% if quota.limit and not quota.unlimited %}
+  <div class="panel" style="min-width:190px">
+    <div class="row-between tiny"><span class="upper">Camera quota</span><span class="numeric">{{ quota.used }}/{{ quota.limit }}</span></div>
+    <div class="meter" style="margin-top:5px">
+      <div class="meter-fill {% if quota.exceeded %}bad{% elif quota.near_limit %}warn{% else %}ok{% endif %}" style="width:{{ quota.percent }}%"></div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<form method="get" class="toolbar">
+  <input type="search" name="q" class="input" placeholder="Search cameras…" value="{{ request.GET.q }}">
+  <select name="site" class="input" data-autosubmit>
+    <option value="">All sites</option>
+    {% for site in sites %}<option value="{{ site.uid }}" {% if request.GET.site == site.uid|stringformat:"s" %}selected{% endif %}>{{ site.name }}</option>{% endfor %}
+  </select>
+  <select name="status" class="input" data-autosubmit>
+    <option value="">Any status</option>
+    {% for value, label in status_choices %}<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-sm btn-primary">Filter</button>
+</form>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Camera</th><th>Site</th><th>Protocol</th><th>Analytics</th><th>Status</th><th>Last frame</th><th class="right">Actions</th></tr></thead>
+      <tbody>
+        {% for camera in cameras %}
+        <tr>
+          <td>
+            <a href="{{ camera.get_absolute_url }}" class="semibold">{{ camera.name }}</a>
+            <div class="tiny dim">{{ camera.location_note|default:camera.masked_url|truncatechars:44 }}</div>
+          </td>
+          <td class="small">{{ camera.site.name }}</td>
+          <td><span class="pill pill-muted">{{ camera.get_protocol_display }}</span></td>
+          <td>
+            <div class="row row-tight">
+              {% for key in camera.enabled_analytics %}<span class="chip tiny">{{ key }}</span>{% endfor %}
+              {% if not camera.enabled_analytics %}<span class="tiny dim">None enabled</span>{% endif %}
+            </div>
+            {% if camera.blocked_analytics %}<div class="tiny" style="color:var(--warn)">{{ camera.blocked_analytics|length }} blocked by plan</div>{% endif %}
+          </td>
+          <td>{{ camera.status|status_pill }}</td>
+          <td class="small nowrap">{{ camera.last_frame_at|ago }}</td>
+          <td class="actions">
+            <a href="{{ camera.get_absolute_url }}" class="btn btn-sm btn-ghost">Open</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">
+          <div class="empty">
+            <div class="empty-icon" aria-hidden="true">▣</div>
+            <h3>No cameras yet</h3>
+            <p>Connect an existing CCTV stream, or add a simulated camera to try everything first.</p>
+            {% if 'cameras.manage' in user_permissions %}<a href="{% url 'dashboard:camera_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Add a camera</a>{% endif %}
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

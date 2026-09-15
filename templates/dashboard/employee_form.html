@@ -1,0 +1,26 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if employee %}Edit{% else %}Add{% endif %} employee{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:employees' %}">Employees</a> <span>/</span> <span>{% if employee %}{{ employee.full_name }}{% else %}New{% endif %}</span></div>
+  <h1>{% if employee %}Edit {{ employee.full_name }}{% else %}Add an employee{% endif %}</h1>
+</div>
+<div class="card" style="max-width:800px">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="form-grid">
+        {% for field in form %}
+          {% if field.name in "notes,sites,consent_given" %}
+            <div class="full">{% include "partials/form_field.html" with field=field %}</div>
+          {% else %}{% include "partials/form_field.html" with field=field %}{% endif %}
+        {% endfor %}
+      </div>
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'dashboard:employees' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

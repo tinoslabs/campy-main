@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Django
+data/*.sqlite3
+media/
+staticfiles/
+*.log
+
+# Campy AI runtime artefacts
+# Weights trained inside a workspace are runtime output; the base models ship.
+var/models/*
+!var/models/.gitkeep
+!var/models/base/
+var/datasets/*
+!var/datasets/.gitkeep
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Tooling
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+
+# Handbook build artefacts
+docs/handbooks/fonts.css
+docs/handbooks/_*.pdf

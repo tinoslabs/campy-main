@@ -1,0 +1,62 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{{ site.name }}{% endblock %}
+{% block topbar_actions %}
+{% if 'cameras.manage' in user_permissions %}
+  <a href="{% url 'dashboard:site_edit' site.uid %}" class="btn btn-sm">Edit site</a>
+  <a href="{% url 'dashboard:camera_create' %}" class="btn btn-sm btn-primary">＋ Add camera</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:sites' %}">Sites</a> <span>/</span> <span>{{ site.name }}</span></div>
+  <h1>{{ site.name }}</h1>
+  <p class="subtitle">{{ site.address }}{% if site.city %}, {{ site.city }}{% endif %} · {{ site.timezone }}</p>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-5)">
+  <div class="stat"><div class="stat-label">Cameras</div><div class="stat-value">{{ site.camera_count }}</div></div>
+  <div class="stat"><div class="stat-label">Online</div><div class="stat-value" style="color:var(--ok)">{{ site.online_camera_count }}</div></div>
+  <div class="stat"><div class="stat-label">Employees</div><div class="stat-value">{{ employees|length }}</div></div>
+  <div class="stat"><div class="stat-label">Contact</div><div class="stat-value" style="font-size:1rem">{{ site.contact_name|default:"—" }}</div><div class="stat-meta">{{ site.contact_phone }}</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.05rem">Cameras at this site</h2></div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Camera</th><th>Status</th><th>Analytics</th><th>Last frame</th></tr></thead>
+        <tbody>
+          {% for camera in cameras %}
+          <tr>
+            <td><a href="{{ camera.get_absolute_url }}" class="semibold">{{ camera.name }}</a>
+              <div class="tiny dim">{{ camera.location_note }}</div></td>
+            <td>{{ camera.status|status_pill }}</td>
+            <td><div class="row row-tight">{% for key in camera.enabled_analytics %}<span class="chip tiny">{{ key }}</span>{% endfor %}</div></td>
+            <td class="small nowrap">{{ camera.last_frame_at|ago }}</td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="center muted" style="padding:var(--sp-6)">No cameras at this site yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.02rem">Recent events</h2></div>
+    <div class="card-body">
+      <div class="feed">
+        {% for event in recent_events %}
+        <div class="feed-item">
+          <span class="feed-marker" style="background:{% if event.severity == 'critical' %}var(--crit){% elif event.severity == 'high' %}var(--bad){% else %}var(--info){% endif %}"></span>
+          <div class="feed-body">
+            <div class="feed-title" style="font-size:.86rem"><a href="{{ event.get_absolute_url }}">{{ event.title|truncatechars:44 }}</a></div>
+            <div class="feed-meta tiny">{{ event.camera.name }} · {{ event.occurred_at|ago }}</div>
+          </div>
+        </div>
+        {% empty %}<p class="small muted center">No events at this site.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

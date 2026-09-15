@@ -1,0 +1,74 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if role %}Edit role{% else %}New role{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'accounts:roles' %}">Roles</a> <span>/</span> <span>{% if role %}{{ role.name }}{% else %}New role{% endif %}</span></div>
+  <h1>{% if role %}Edit “{{ role.name }}”{% else %}Create a role{% endif %}</h1>
+  <p class="subtitle">Tick exactly what this role may do. Nothing is granted by default.</p>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,2.2fr);gap:var(--sp-5);align-items:start">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Role details</h2></div>
+      <div class="card-body">{% include "partials/form.html" %}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2 style="font-size:1.02rem">Permissions</h2>
+        <span class="small muted"><span id="perm-count">0</span> selected</span>
+      </div>
+      <div class="card-body">
+        {% for module, permissions in permission_groups.items %}
+          {% if permissions %}
+          <fieldset>
+            <legend>{{ PERMISSION_MODULES|get_item:module|default:module }}</legend>
+            {% for permission in permissions %}
+              {% if not permission.code|slice:":9" == "platform." %}
+              <label class="check">
+                <input type="checkbox" name="permissions" value="{{ permission.code }}"
+                       {% if permission.code in current_permissions %}checked{% endif %}
+                       class="perm-check">
+                <span>
+                  {{ permission.label }}
+                  <span class="mono tiny dim">{{ permission.code }}</span>
+                  {% if permission.requires_feature %}
+                    <span class="pill pill-info tiny">needs {{ permission.requires_feature }}</span>
+                  {% endif %}
+                </span>
+              </label>
+              {% endif %}
+            {% endfor %}
+          </fieldset>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="card-foot row">
+        <button type="submit" class="btn btn-primary">Save role</button>
+        <a href="{% url 'accounts:roles' %}" class="btn btn-ghost">Cancel</a>
+        <div class="spacer"></div>
+        <button type="button" class="btn btn-sm" id="select-all">Select all</button>
+        <button type="button" class="btn btn-sm" id="select-none">Clear all</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+(function(){
+  var boxes = document.querySelectorAll('.perm-check');
+  var counter = document.getElementById('perm-count');
+  function sync(){ counter.textContent = document.querySelectorAll('.perm-check:checked').length; }
+  boxes.forEach(function(b){ b.addEventListener('change', sync); });
+  document.getElementById('select-all').addEventListener('click', function(){
+    boxes.forEach(function(b){ b.checked = true; }); sync();
+  });
+  document.getElementById('select-none').addEventListener('click', function(){
+    boxes.forEach(function(b){ b.checked = false; }); sync();
+  });
+  sync();
+})();
+</script>
+{% endblock %}

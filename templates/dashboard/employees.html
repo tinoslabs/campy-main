@@ -1,0 +1,68 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Employees{% endblock %}
+{% block topbar_actions %}{% if 'employees.manage' in user_permissions %}<a href="{% url 'dashboard:employee_create' %}" class="btn btn-sm btn-primary">＋ Add employee</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head row-between">
+  <div><h1>Employee directory</h1>
+    <p class="subtitle">{{ total|intcomma }} people · {{ enrolled_count }} enrolled for recognition</p></div>
+</div>
+
+{% if not face_enabled %}
+<div class="alert alert-info">
+  <span aria-hidden="true">i</span>
+  <div><strong>Face recognition is not in your current package.</strong>
+    You can still keep a directory; enrolment and recognition need an upgrade.
+    <a href="{% url 'billing:packages' %}">Compare plans →</a></div>
+</div>
+{% endif %}
+
+<form method="get" class="toolbar">
+  <input type="search" name="q" class="input" placeholder="Search by name, code or department…" value="{{ request.GET.q }}">
+  <select name="status" class="input" data-autosubmit>
+    <option value="">Everyone</option>
+    <option value="enrolled" {% if request.GET.status == 'enrolled' %}selected{% endif %}>Enrolled</option>
+    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Not enrolled</option>
+  </select>
+  <button class="btn btn-sm btn-primary">Search</button>
+</form>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Person</th><th>Role</th><th>Department</th><th>Sites</th><th>Recognition</th><th class="right">Actions</th></tr></thead>
+      <tbody>
+        {% for employee in employees %}
+        <tr>
+          <td>
+            <div class="row row-tight">
+              <span class="avatar avatar-sm">{% if employee.photo %}<img src="{{ employee.photo.url }}" alt="">{% else %}{{ employee.initials }}{% endif %}</span>
+              <div>
+                <a href="{{ employee.get_absolute_url }}" class="semibold">{{ employee.full_name }}</a>
+                {% if employee.employee_code %}<div class="mono tiny dim">{{ employee.employee_code }}</div>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td class="small">{{ employee.role|default:"—" }}</td>
+          <td class="small">{{ employee.department|default:"—" }}</td>
+          <td class="small">{% for site in employee.sites.all %}{{ site.name }}{% if not forloop.last %}, {% endif %}{% empty %}All{% endfor %}</td>
+          <td>
+            {% if employee.is_enrolled %}<span class="pill pill-ok">Enrolled · {{ employee.enrolment_samples }} sample{{ employee.enrolment_samples|pluralize }}</span>
+            {% elif not employee.consent_given %}<span class="pill pill-warn">Consent required</span>
+            {% else %}<span class="pill pill-muted">Not enrolled</span>{% endif %}
+          </td>
+          <td class="actions"><a href="{{ employee.get_absolute_url }}" class="btn btn-sm btn-ghost">Open</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6"><div class="empty">
+          <div class="empty-icon" aria-hidden="true">☺</div><h3>No employees yet</h3>
+          <p>Add the people you want Campy AI to recognise, so alerts can say who — not just what.</p>
+          {% if 'employees.manage' in user_permissions %}<a href="{% url 'dashboard:employee_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Add an employee</a>{% endif %}
+        </div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

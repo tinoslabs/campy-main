@@ -1,0 +1,16 @@
+<section class="hero {% if block.background == 'dark' %}section-dark{% elif block.background == 'muted' %}section-muted{% endif %}">
+  <div class="container">
+    <div class="{% if block.image %}grid grid-2{% endif %}" style="align-items:center;gap:var(--sp-7)">
+      <div>
+        {% if block.subheading %}<span class="hero-eyebrow">{{ block.subheading }}</span>{% endif %}
+        <h1>{{ block.heading }}</h1>
+        {% if block.body %}<p class="lead">{{ block.body|linebreaksbr }}</p>{% endif %}
+        <div class="row" style="margin-top:var(--sp-5)">
+          {% if block.primary_label %}<a href="{{ block.primary_url|default:'#' }}" class="btn btn-primary btn-lg">{{ block.primary_label }}</a>{% endif %}
+          {% if block.secondary_label %}<a href="{{ block.secondary_url|default:'#' }}" class="btn btn-lg">{{ block.secondary_label }}</a>{% endif %}
+        </div>
+      </div>
+      {% if block.image %}<img src="{{ block.image.url }}" alt="" style="border-radius:var(--radius-lg);box-shadow:var(--shadow-3)">{% endif %}
+    </div>
+  </div>
+</section>

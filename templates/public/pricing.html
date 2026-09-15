@@ -1,0 +1,112 @@
+{% extends "public/base.html" %}
+{% load humanize %}
+{% block title %}Pricing — {{ BRAND.name }}{% endblock %}
+{% block meta_description %}Campy AI pricing. Start with a free trial, then pick the package that matches your camera count.{% endblock %}
+
+{% block public_content %}
+<section class="hero" style="padding-bottom:var(--sp-5)">
+  <div class="container container-narrow center">
+    <span class="hero-eyebrow">Pricing</span>
+    <h1>Priced by what you monitor</h1>
+    <p class="lead" style="margin-inline:auto">Every plan includes a free trial. No setup fee unless stated, cancel any time.</p>
+    <div class="btn-group" style="margin-top:var(--sp-4)">
+      <a href="?currency=INR" class="btn {% if currency == 'INR' %}btn-primary{% endif %}">₹ INR</a>
+      <a href="?currency=USD" class="btn {% if currency == 'USD' %}btn-primary{% endif %}">$ USD</a>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container">
+    {% if packages %}
+    <div class="grid grid-auto-lg">
+      {% for package in packages %}
+      <div class="price-card {% if package.is_featured %}featured{% endif %}">
+        {% if package.badge %}<span class="price-badge">{{ package.badge }}</span>{% endif %}
+        <h3>{{ package.name }}</h3>
+        <p class="small muted" style="min-height:38px">{{ package.tagline }}</p>
+        <div class="price-amount">
+          {{ symbol }}{% if currency == 'INR' %}{{ package.price_inr|floatformat:0|intcomma }}{% else %}{{ package.price_usd|floatformat:0|intcomma }}{% endif %}
+        </div>
+        <div class="small dim">per {{ package.get_interval_display|lower }}{% if package.trial_days %} · {{ package.trial_days }}-day free trial{% endif %}</div>
+
+        <ul class="price-features">
+          <li><strong>{{ package.quota_label|default:"" }}{{ package.quotas.cameras|default:"0" }}</strong>&nbsp;cameras</li>
+          <li><strong>{{ package.quotas.sites|default:"1" }}</strong>&nbsp;site{{ package.quotas.sites|pluralize }}</li>
+          <li><strong>{{ package.quotas.users|default:"1" }}</strong>&nbsp;team members</li>
+          <li><strong>{{ package.quotas.retention_days|default:"30" }}</strong>&nbsp;days event retention</li>
+          {% for key, label in features %}
+            {% if package.features|get_item:key %}<li>{{ label }}</li>{% endif %}
+          {% endfor %}
+        </ul>
+
+        {% if request.user.is_authenticated %}
+          <a href="{% url 'billing:checkout' package.slug %}" class="btn {% if package.is_featured %}btn-primary{% endif %} btn-block">Choose {{ package.name }}</a>
+        {% else %}
+          <a href="{% url 'accounts:signup' %}" class="btn {% if package.is_featured %}btn-primary{% endif %} btn-block">
+            {% if package.trial_days %}Start free trial{% else %}Get started{% endif %}
+          </a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {# ---- comparison table ---- #}
+    <div class="card" style="margin-top:var(--sp-7)">
+      <div class="card-head"><h2 style="font-size:1.1rem">Compare every capability</h2></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th style="min-width:220px">Capability</th>
+              {% for package in packages %}<th class="center">{{ package.name }}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for key, label in quotas %}
+            <tr>
+              <td class="semibold">{{ label }}</td>
+              {% for package in packages %}
+                <td class="center numeric">{{ package.quota_label|default:"" }}{% with value=package.quotas|get_item:key %}{% if value == -1 %}Unlimited{% else %}{{ value|default:"—" }}{% endif %}{% endwith %}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+            {% for key, label in features %}
+            <tr>
+              <td>{{ label }}</td>
+              {% for package in packages %}
+                <td class="center">{% if package.features|get_item:key %}<span style="color:var(--ok);font-weight:700">✓</span>{% else %}<span class="dim">—</span>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon" aria-hidden="true">◫</div>
+      <h3>Packages are being finalised</h3>
+      <p>Get in touch and we will put together pricing that matches your deployment.</p>
+      <a href="{% url 'cms:contact' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Talk to us</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% if faqs %}
+<section class="section section-muted">
+  <div class="container container-narrow">
+    <div class="section-head"><h2>Pricing questions</h2></div>
+    <div class="stack">
+      {% for faq in faqs %}
+      <details class="card card-pad">
+        <summary class="semibold" style="cursor:pointer">{{ faq.question }}</summary>
+        <p class="muted small" style="margin-top:var(--sp-3);margin-bottom:0">{{ faq.answer|linebreaksbr }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

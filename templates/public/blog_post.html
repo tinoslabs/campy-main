@@ -1,0 +1,51 @@
+{% extends "public/base.html" %}
+{% block title %}{{ post.meta_title }} · {{ BRAND.name }}{% endblock %}
+{% block meta_description %}{{ post.meta_description }}{% endblock %}
+{% block meta_extra %}
+  {% if post.no_index %}<meta name="robots" content="noindex">{% endif %}
+  <meta property="og:title" content="{{ post.meta_title }}">
+  <meta property="og:description" content="{{ post.meta_description }}">
+  {% if post.og_image %}<meta property="og:image" content="{{ post.og_image.url }}">{% endif %}
+{% endblock %}
+
+{% block public_content %}
+<article class="section">
+  <div class="container container-narrow">
+    <div class="breadcrumbs"><a href="{% url 'cms:blog' %}">Blog</a> <span>/</span> <span>{{ post.title|truncatechars:44 }}</span></div>
+    {% if post.category %}<span class="pill pill-accent">{{ post.category.name }}</span>{% endif %}
+    <h1 style="margin-top:var(--sp-3)">{{ post.title }}</h1>
+    <div class="row small muted" style="margin-bottom:var(--sp-5)">
+      <span class="avatar avatar-sm">{{ post.display_author|slice:":2"|upper }}</span>
+      <span>{{ post.display_author }}</span><span>·</span>
+      <span>{{ post.published_at|date:"j F Y" }}</span><span>·</span>
+      <span>{{ post.reading_minutes }} min read</span>
+    </div>
+    {% if post.cover_image %}
+      <img src="{{ post.cover_image.url }}" alt="" style="border-radius:var(--radius-lg);margin-bottom:var(--sp-5)">
+    {% endif %}
+    {% if post.excerpt %}<p class="lead">{{ post.excerpt }}</p>{% endif %}
+    <div style="font-size:1rem;line-height:1.75">{{ post.body|linebreaks }}</div>
+    {% if post.tags.exists %}
+    <div class="row" style="margin-top:var(--sp-6)">
+      {% for tag in post.tags.all %}<a href="{{ tag.get_absolute_url }}" class="chip">#{{ tag.name }}</a>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</article>
+
+{% if related %}
+<section class="section section-muted">
+  <div class="container">
+    <h2>Keep reading</h2>
+    <div class="grid grid-3">
+      {% for item in related %}
+      <a href="{{ item.get_absolute_url }}" class="card card-pad card-hover" style="text-decoration:none">
+        <h3 style="font-size:1rem">{{ item.title }}</h3>
+        <p class="small muted">{{ item.excerpt|truncatewords:18 }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

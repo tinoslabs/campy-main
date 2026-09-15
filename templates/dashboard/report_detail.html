@@ -1,0 +1,42 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}{{ report.name }}{% endblock %}
+{% block topbar_actions %}
+{% if 'analytics.export' in user_permissions %}<a href="{% url 'dashboard:report_export' report.uid %}" class="btn btn-sm">⤓ CSV</a>{% endif %}
+<button onclick="window.print()" class="btn btn-sm">Print</button>
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:reports' %}">Reports</a> <span>/</span> <span>{{ report.name }}</span></div>
+  <h1>{{ report.name }}</h1>
+  <p class="subtitle">{{ report.get_kind_display }} · {{ payload.period_start }} to {{ payload.period_end }}</p>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-5)">
+  <div class="stat"><div class="stat-label">Total events</div><div class="stat-value">{{ payload.summary.total_events|intcomma }}</div></div>
+  <div class="stat"><div class="stat-label">High &amp; critical</div><div class="stat-value" style="color:var(--bad)">{{ payload.summary.critical }}</div></div>
+  <div class="stat"><div class="stat-label">Resolved</div><div class="stat-value">{{ payload.summary.resolution_rate }}%</div></div>
+  <div class="stat"><div class="stat-label">False alarms</div><div class="stat-value">{{ payload.summary.false_positive_rate }}%</div></div>
+</div>
+
+{% for section in payload.sections %}
+<div class="card" style="margin-bottom:var(--sp-5)">
+  <div class="card-head"><h2 style="font-size:1.05rem">{{ section.title }}</h2>
+    <span class="small dim">{{ section.rows|length }} row{{ section.rows|length|pluralize }}</span></div>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr>{% for column in section.columns %}<th>{{ column }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for row in section.rows %}
+          <tr>{% for cell in row %}<td class="small">{{ cell }}</td>{% endfor %}</tr>
+        {% empty %}
+          <tr><td colspan="{{ section.columns|length }}" class="center muted" style="padding:var(--sp-5)">No data in this period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+
+<p class="tiny dim center">Generated {{ payload.generated_at|date:"j F Y, H:i" }} · {{ current_organization.name }}</p>
+{% endblock %}

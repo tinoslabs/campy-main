@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}{% block page_title %}Dashboard{% endblock %} · {{ BRAND.name }}{% endblock %}
+{% block body_class %}app-body{% endblock %}
+
+{% block body %}
+<div class="app">
+  {# ---------------- Sidebar ---------------- #}
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <a href="{% url 'dashboard:home' %}" style="display:flex;align-items:center;gap:9px">
+        <img src="{% static BRAND.logo %}" alt="{{ BRAND.name }}" class="logo-light">
+      </a>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Main navigation">
+      <div class="nav-section">
+        <a href="{% url 'dashboard:home' %}" class="nav-link {% if active == 'home' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">◧</span> Overview
+        </a>
+        {% if 'live.view' in user_permissions %}
+        <a href="{% url 'dashboard:live' %}" class="nav-link {% if active == 'live' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">◉</span> Live wall
+        </a>
+        {% endif %}
+        {% if 'events.view' in user_permissions %}
+        <a href="{% url 'dashboard:events' %}" class="nav-link {% if active == 'events' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">⚠</span> Events
+          {% if open_event_count %}<span class="nav-count {% if critical_event_count %}urgent{% endif %}">{{ open_event_count }}</span>{% endif %}
+        </a>
+        <a href="{% url 'dashboard:incidents' %}" class="nav-link {% if active == 'incidents' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">▤</span> Incidents
+        </a>
+        {% endif %}
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Monitoring</div>
+        {% if 'cameras.view' in user_permissions %}
+        <a href="{% url 'dashboard:sites' %}" class="nav-link {% if active == 'sites' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">⌂</span> Sites
+        </a>
+        <a href="{% url 'dashboard:cameras' %}" class="nav-link {% if active == 'cameras' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">▣</span> Cameras
+          {% if offline_camera_count %}<span class="nav-count urgent">{{ offline_camera_count }}</span>{% endif %}
+        </a>
+        {% endif %}
+        {% if 'zones.view' in user_permissions %}
+        <a href="{% url 'dashboard:zones' %}" class="nav-link {% if active == 'zones' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">⬡</span> Zones
+        </a>
+        {% endif %}
+        {% if 'employees.view' in user_permissions %}
+        <a href="{% url 'dashboard:employees' %}" class="nav-link {% if active == 'employees' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">☺</span> Employees
+        </a>
+        {% endif %}
+        {% if 'alerts.view' in user_permissions %}
+        <a href="{% url 'dashboard:alert_rules' %}" class="nav-link {% if active == 'alerts' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">◈</span> Alert rules
+        </a>
+        {% endif %}
+      </div>
+
+      {% if 'analytics.view' in user_permissions or 'training.view' in user_permissions %}
+      <div class="nav-section">
+        <div class="nav-section-title">Intelligence</div>
+        {% if 'analytics.view' in user_permissions %}
+        <a href="{% url 'dashboard:analytics' %}" class="nav-link {% if active == 'analytics' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">▲</span> Analytics
+        </a>
+        <a href="{% url 'dashboard:reports' %}" class="nav-link {% if active == 'reports' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">▦</span> Reports
+        </a>
+        {% endif %}
+        {% if 'training.view' in user_permissions %}
+        <a href="{% url 'dashboard:datasets' %}" class="nav-link {% if active == 'datasets' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">⛁</span> Datasets
+        </a>
+        <a href="{% url 'dashboard:training_jobs' %}" class="nav-link {% if active == 'training' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">⚙</span> Training
+          {% if running_job_count %}<span class="nav-count">{{ running_job_count }}</span>{% endif %}
+        </a>
+        {% endif %}
+        {% if 'models.view' in user_permissions %}
+        <a href="{% url 'dashboard:models' %}" class="nav-link {% if active == 'models' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">◆</span> Models
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div class="nav-section">
+        <div class="nav-section-title">Workspace</div>
+        {% if 'people.view' in user_permissions %}
+        <a href="{% url 'dashboard:team' %}" class="nav-link {% if active == 'team' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">⚭</span> Team &amp; roles
+        </a>
+        {% endif %}
+        {% if 'billing.view' in user_permissions %}
+        <a href="{% url 'billing:overview' %}" class="nav-link {% if active == 'billing' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">₹</span> Billing
+        </a>
+        {% endif %}
+        {% if 'api.view' in user_permissions %}
+        <a href="{% url 'dashboard:api_keys' %}" class="nav-link {% if active == 'api' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">⚿</span> API &amp; webhooks
+        </a>
+        {% endif %}
+        {% if 'org.view' in user_permissions %}
+        <a href="{% url 'dashboard:settings' %}" class="nav-link {% if active == 'settings' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">⚒</span> Settings
+        </a>
+        {% endif %}
+        {% if 'audit.view' in user_permissions %}
+        <a href="{% url 'dashboard:audit' %}" class="nav-link {% if active == 'audit' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">▩</span> Audit log
+        </a>
+        {% endif %}
+      </div>
+
+      {% if is_platform_team %}
+      <div class="nav-section">
+        <div class="nav-section-title">Campy AI platform</div>
+        <a href="{% url 'dashboard:admin_home' %}" class="nav-link {% if active == 'admin' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">★</span> Platform console
+        </a>
+        <a href="{% url 'dashboard:admin_organizations' %}" class="nav-link {% if active == 'admin_orgs' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">⌸</span> Organisations
+        </a>
+        <a href="{% url 'dashboard:admin_packages' %}" class="nav-link {% if active == 'admin_packages' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">◫</span> Packages
+        </a>
+        <a href="{% url 'dashboard:admin_cms' %}" class="nav-link {% if active == 'admin_cms' %}active{% endif %}">
+          <span class="nav-icon" aria-hidden="true">✎</span> Website CMS
+        </a>
+      </div>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-foot">
+      {% if current_subscription %}
+        <div class="panel" style="padding:11px">
+          <div class="row-between">
+            <span class="tiny upper">Plan</span>
+            {{ current_subscription.status|status_pill }}
+          </div>
+          <div class="semibold small" style="margin-top:3px">{{ current_package.name }}</div>
+          {% if is_trialing %}
+            <div class="tiny muted">{{ trial_days_left }} day{{ trial_days_left|pluralize }} of trial left</div>
+          {% endif %}
+          {% if 'billing.manage' in user_permissions %}
+            <a href="{% url 'billing:packages' %}" class="btn btn-sm btn-outline btn-block" style="margin-top:8px">
+              {% if is_trialing %}Upgrade{% else %}Manage plan{% endif %}
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </aside>
+
+  {# ---------------- Main ---------------- #}
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-ghost btn-sm sidebar-toggle" data-sidebar-toggle aria-label="Toggle navigation">☰</button>
+
+      {% if available_organizations|length > 1 or is_superadmin %}
+      <div class="dropdown">
+        <button class="btn btn-sm" data-dropdown aria-haspopup="true">
+          <span class="dot" style="color:var(--accent)"></span>
+          {{ current_organization.name|default:"Select workspace" }} ▾
+        </button>
+        <div class="dropdown-menu" style="left:0;right:auto">
+          <div class="dropdown-header">Switch workspace</div>
+          {% for org in available_organizations %}
+            <a href="?org={{ org.slug }}" class="dropdown-item">
+              <span class="avatar avatar-sm">{{ org.name|slice:":2"|upper }}</span>
+              <span class="truncate">{{ org.name }}</span>
+              {% if org.pk == current_organization.pk %}<span style="margin-left:auto">✓</span>{% endif %}
+            </a>
+          {% endfor %}
+          <div class="dropdown-divider"></div>
+          <a href="{% url 'accounts:organization_create' %}" class="dropdown-item">＋ New workspace</a>
+        </div>
+      </div>
+      {% else %}
+        <div class="semibold">{{ current_organization.name }}</div>
+      {% endif %}
+
+      <div class="spacer"></div>
+
+      {% block topbar_actions %}{% endblock %}
+
+      <button class="btn btn-ghost btn-sm" onclick="campyToggleTheme()" aria-label="Toggle dark mode" title="Toggle dark mode">◐</button>
+
+      <a href="{% url 'dashboard:notifications' %}" class="btn btn-ghost btn-sm" aria-label="Notifications" title="Notifications">
+        ✉{% if unread_notification_count %}<span class="badge pill-bad" style="margin-left:3px">{{ unread_notification_count }}</span>{% endif %}
+      </a>
+
+      <div class="dropdown">
+        <button class="avatar" data-dropdown aria-haspopup="true" aria-label="Account menu">
+          {% if user.avatar %}<img src="{{ user.avatar.url }}" alt="">{% else %}{{ user.initials }}{% endif %}
+        </button>
+        <div class="dropdown-menu">
+          <div class="dropdown-header">{{ user.get_full_name }}</div>
+          <div style="padding:0 11px 8px" class="tiny dim truncate">{{ user.email }}</div>
+          {% if current_membership %}
+            <div style="padding:0 11px 9px">
+              <span class="pill pill-accent">{{ current_membership.role.name }}</span>
+            </div>
+          {% elif is_superadmin %}
+            <div style="padding:0 11px 9px"><span class="pill pill-accent">Super Administrator</span></div>
+          {% endif %}
+          <div class="dropdown-divider"></div>
+          <a href="{% url 'accounts:profile' %}" class="dropdown-item">Your profile</a>
+          <a href="{% url 'accounts:security' %}" class="dropdown-item">Security</a>
+          {% if is_platform_team %}
+            <a href="{% url 'dashboard:admin_home' %}" class="dropdown-item">Platform console</a>
+          {% endif %}
+          <div class="dropdown-divider"></div>
+          <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+            <button type="submit" class="dropdown-item">Sign out</button>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="main-content">
+      {% if subscription_warning and 'billing.view' in user_permissions %}
+        <div class="alert alert-warning">
+          <span aria-hidden="true">!</span>
+          <div>
+            {% if current_subscription.status == 'past_due' %}
+              <strong>Payment overdue.</strong> Monitoring continues during the grace period, but the workspace will be suspended if payment is not received.
+            {% else %}
+              <strong>Your plan renews in {{ current_subscription.days_remaining }} day{{ current_subscription.days_remaining|pluralize }}.</strong>
+            {% endif %}
+            <a href="{% url 'billing:overview' %}">Go to billing →</a>
+          </div>
+        </div>
+      {% endif %}
+
+      {% include "partials/messages.html" %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Leads{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:admin_cms' %}">Website</a> <span>/</span> <span>Leads</span></div>
+  <h1>Enquiries</h1><p class="subtitle">{{ total|intcomma }} enquiries from the website.</p>
+</div>
+<form method="get" class="toolbar">
+  <select name="status" class="input" data-autosubmit>
+    <option value="">All statuses</option>
+    {% for value, label in status_choices %}<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+</form>
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Contact</th><th>Company</th><th>Cameras</th><th>Source</th><th>Received</th><th>Status</th><th class="right">Update</th></tr></thead>
+      <tbody>
+        {% for lead in leads %}
+        <tr>
+          <td><span class="semibold">{{ lead.name }}</span>
+            <div class="tiny dim"><a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% if lead.phone %} · {{ lead.phone }}{% endif %}</div>
+            {% if lead.message %}<div class="tiny muted" style="margin-top:3px;max-width:340px">{{ lead.message|truncatechars:110 }}</div>{% endif %}</td>
+          <td class="small">{{ lead.company|default:"—" }}<div class="tiny dim">{{ lead.job_title }}</div></td>
+          <td class="small">{{ lead.camera_count|default:"—" }}</td>
+          <td><span class="pill pill-muted">{{ lead.get_source_display }}</span></td>
+          <td class="small nowrap">{{ lead.created_at|date:"j M, H:i" }}</td>
+          <td>{{ lead.status|status_pill }}</td>
+          <td class="actions">
+            <form method="post" action="{% url 'cms:cms_lead_status' lead.pk %}" class="row row-tight">
+              {% csrf_token %}
+              <select name="status" class="input" style="width:auto;font-size:.8rem;padding:4px 8px">
+                {% for value, label in status_choices %}<option value="{{ value }}" {% if lead.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+              </select>
+              <button class="btn btn-sm">Set</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}<tr><td colspan="7" class="center muted" style="padding:var(--sp-6)">No enquiries yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

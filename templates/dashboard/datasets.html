@@ -1,0 +1,43 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Datasets{% endblock %}
+{% block topbar_actions %}{% if 'training.datasets' in user_permissions %}<a href="{% url 'dashboard:dataset_create' %}" class="btn btn-sm btn-primary">＋ New dataset</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Datasets</h1><p class="subtitle">Labelled footage from your own cameras — the raw material for your own models.</p></div>
+<div class="grid grid-auto-lg">
+  {% for dataset in datasets %}
+  <div class="card card-pad card-hover">
+    <div class="row-between">
+      <h3 style="margin:0;font-size:1.02rem"><a href="{{ dataset.get_absolute_url }}">{{ dataset.name }}</a></h3>
+      {{ dataset.status|status_pill }}
+    </div>
+    <p class="small muted" style="margin-top:var(--sp-2)">{{ dataset.description|truncatechars:80|default:dataset.get_task_display }}</p>
+    <div class="row row-tight" style="margin-top:var(--sp-3)">
+      {% for name in dataset.classes %}<span class="chip tiny">{{ name }}</span>{% endfor %}
+    </div>
+    <div class="row-between small" style="margin-top:var(--sp-4)">
+      <span><strong class="numeric">{{ dataset.labelled_count|intcomma }}</strong> labelled</span>
+      <span class="dim">{{ dataset.sample_count|intcomma }} total</span>
+    </div>
+    <div class="meter" style="margin-top:5px">
+      <div class="meter-fill {% if dataset.is_trainable %}ok{% else %}warn{% endif %}" style="width:{{ dataset.labelling_progress }}%"></div>
+    </div>
+    {% if dataset.is_imbalanced %}
+      <p class="tiny" style="color:var(--warn);margin-top:8px">⚠ Classes are imbalanced — accuracy will overstate the rare class.</p>
+    {% endif %}
+    <div class="row" style="margin-top:var(--sp-4)">
+      <a href="{{ dataset.get_absolute_url }}" class="btn btn-sm">Open</a>
+      {% if dataset.is_trainable and 'training.run' in user_permissions %}
+        <a href="{% url 'dashboard:training_job_create' %}?dataset={{ dataset.pk }}" class="btn btn-sm btn-primary">Train</a>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty card" style="grid-column:1/-1">
+    <div class="empty-icon" aria-hidden="true">⛁</div><h3>No datasets yet</h3>
+    <p>Create one, add labelled frames, and train a model that understands <em>your</em> site.</p>
+    {% if 'training.datasets' in user_permissions %}<a href="{% url 'dashboard:dataset_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Create a dataset</a>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

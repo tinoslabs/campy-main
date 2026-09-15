@@ -1,0 +1,44 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Audit log{% endblock %}
+{% block topbar_actions %}{% if can_export %}<a href="{% url 'dashboard:audit_export' %}" class="btn btn-sm">⤓ Export CSV</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Audit log</h1>
+  <p class="subtitle">{{ total|intcomma }} recorded actions — who did what, when, and from where.</p></div>
+
+<form method="get" class="toolbar">
+  <input type="search" name="q" class="input" placeholder="Search actions, people, targets…" value="{{ request.GET.q }}">
+  <select name="action" class="input" data-autosubmit>
+    <option value="">All actions</option>
+    {% for value, label in action_choices %}<option value="{{ value }}" {% if request.GET.action == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <label class="check" style="margin:0"><input type="checkbox" name="sensitive" value="1" data-autosubmit {% if request.GET.sensitive == '1' %}checked{% endif %}><span class="small">Sensitive only</span></label>
+  <button class="btn btn-sm btn-primary">Filter</button>
+</form>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Detail</th><th>IP</th></tr></thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr {% if entry.is_sensitive %}style="background:var(--warn-soft)"{% endif %}>
+          <td class="nowrap small">{{ entry.created_at|date:"j M Y" }}<div class="tiny dim">{{ entry.created_at|date:"H:i:s" }}</div></td>
+          <td class="small">{{ entry.actor_label|default:"system" }}</td>
+          <td><span class="pill pill-muted">{{ entry.get_action_display }}</span>
+            {% if entry.is_sensitive %}<span class="pill pill-warn tiny">Sensitive</span>{% endif %}</td>
+          <td class="small">{{ entry.target_label|truncatechars:38|default:"—" }}
+            {% if entry.target_type %}<div class="tiny dim">{{ entry.target_type }}</div>{% endif %}</td>
+          <td class="small">{{ entry.summary }}</td>
+          <td class="mono tiny">{{ entry.ip_address|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6"><div class="empty"><div class="empty-icon" aria-hidden="true">▩</div>
+          <h3>Nothing recorded yet</h3><p>Every meaningful action in this workspace lands here.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

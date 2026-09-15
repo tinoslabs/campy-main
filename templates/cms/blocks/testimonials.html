@@ -1,0 +1,19 @@
+<section class="section {% if block.background == 'muted' %}section-muted{% endif %}">
+  <div class="container">
+    {% if block.heading %}<div class="section-head"><h2>{{ block.heading }}</h2></div>{% endif %}
+    <div class="grid grid-3">
+      {% for item in block.items %}
+      <div class="card card-pad">
+        <p style="font-size:.95rem;line-height:1.65">“{{ item.quote }}”</p>
+        <div class="row" style="margin-top:var(--sp-4)">
+          <span class="avatar">{{ item.author|slice:":2"|upper }}</span>
+          <div>
+            <div class="semibold small">{{ item.author }}</div>
+            <div class="tiny dim">{{ item.role }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,59 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Content block{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'cms:cms_pages' %}">Pages</a> <span>/</span>
+    <a href="{% url 'cms:cms_page_edit' page_obj.pk %}">{{ page_obj.title }}</a> <span>/</span> <span>Block</span></div>
+  <h1>{% if block %}Edit block{% else %}Add a content block{% endif %}</h1>
+</div>
+<div class="grid grid-2" style="align-items:start">
+  <div class="card">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="form-grid">
+          {% include "partials/form_field.html" with field=form.kind %}
+          {% include "partials/form_field.html" with field=form.sort_order %}
+          {% include "partials/form_field.html" with field=form.background %}
+        </div>
+        {% include "partials/form_field.html" with field=form.heading %}
+        {% include "partials/form_field.html" with field=form.subheading %}
+        {% include "partials/form_field.html" with field=form.body %}
+        {% include "partials/form_field.html" with field=form.image %}
+        <div class="form-grid">
+          {% include "partials/form_field.html" with field=form.primary_label %}
+          {% include "partials/form_field.html" with field=form.primary_url %}
+          {% include "partials/form_field.html" with field=form.secondary_label %}
+          {% include "partials/form_field.html" with field=form.secondary_url %}
+        </div>
+        {% include "partials/form_field.html" with field=form.items_json %}
+        {% include "partials/form_field.html" with field=form.is_visible %}
+        <div class="row">
+          <button type="submit" class="btn btn-primary">Save block</button>
+          <a href="{% url 'cms:cms_page_edit' page_obj.pk %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="card card-pad">
+    <div class="upper">Item shapes by block type</div>
+    <div class="code-block" style="margin-top:var(--sp-3)">Features / Steps
+[{"icon":"🔥","title":"Fire detection","body":"…"}]
+
+Stats
+[{"value":"7","label":"detectors"}]
+
+Testimonials
+[{"quote":"…","author":"Asha","role":"Ops lead"}]
+
+FAQ
+[{"question":"…","answer":"…"}]
+
+Logos
+[{"name":"Acme"}]
+
+Gallery
+[{"url":"/media/…","alt":"…","caption":"…"}]</div>
+  </div>
+</div>
+{% endblock %}

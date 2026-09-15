@@ -1,0 +1,7 @@
+<section class="section {% if block.background == 'dark' %}section-dark{% elif block.background == 'muted' %}section-muted{% endif %}">
+  <div class="container container-narrow">
+    {% if block.heading %}<h2>{{ block.heading }}</h2>{% endif %}
+    {% if block.subheading %}<p class="lead">{{ block.subheading }}</p>{% endif %}
+    <div style="font-size:1rem;line-height:1.75">{{ block.body|linebreaks }}</div>
+  </div>
+</section>

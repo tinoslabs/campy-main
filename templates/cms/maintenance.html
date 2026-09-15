@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Under maintenance · {{ BRAND.name }}{% endblock %}
+{% block body %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:var(--sp-5)">
+  <div class="center" style="max-width:480px">
+    {% load static %}
+    <img src="{% static BRAND.logo %}" alt="{{ BRAND.name }}" style="height:40px;margin:0 auto var(--sp-6)">
+    <h1>We'll be right back</h1>
+    <p class="lead">{{ settings_obj.maintenance_message|default:"Campy AI is undergoing scheduled maintenance. Monitoring continues on your cameras; only this dashboard is briefly unavailable." }}</p>
+    <p class="muted small">Questions? <a href="mailto:{{ settings_obj.support_email|default:BRAND.support_email }}">{{ settings_obj.support_email|default:BRAND.support_email }}</a></p>
+  </div>
+</div>
+{% endblock %}

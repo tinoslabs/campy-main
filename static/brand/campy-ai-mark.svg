@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Campy AI">
+  <defs>
+    <linearGradient id="campyMark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="55%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="48" height="48" rx="14" fill="url(#campyMark)"/>
+  <circle cx="24" cy="24" r="13.5" fill="none" stroke="#ffffff" stroke-width="2.6" opacity="0.95"/>
+  <circle cx="24" cy="24" r="5" fill="#ffffff"/>
+  <g stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" opacity="0.95">
+    <path d="M24 4.5v5"/><path d="M24 38.5v5"/>
+    <path d="M4.5 24h5"/><path d="M38.5 24h5"/>
+  </g>
+</svg>

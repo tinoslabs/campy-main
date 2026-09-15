@@ -1,0 +1,91 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{{ employee.full_name }}{% endblock %}
+{% block topbar_actions %}
+{% if 'employees.manage' in user_permissions %}<a href="{% url 'dashboard:employee_edit' employee.uid %}" class="btn btn-sm">Edit</a>{% endif %}
+{% if 'employees.enroll' in user_permissions and face_enabled %}
+  <a href="{% url 'dashboard:employee_enroll' employee.uid %}" class="btn btn-sm btn-primary">{% if employee.is_enrolled %}Re-enrol face{% else %}Enrol face{% endif %}</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:employees' %}">Employees</a> <span>/</span> <span>{{ employee.full_name }}</span></div>
+  <div class="row">
+    <span class="avatar avatar-lg">{% if employee.photo %}<img src="{{ employee.photo.url }}" alt="">{% else %}{{ employee.initials }}{% endif %}</span>
+    <div>
+      <h1 style="margin-bottom:2px">{{ employee.full_name }}</h1>
+      <p class="subtitle">{{ employee.role|default:"No role recorded" }}{% if employee.department %} · {{ employee.department }}{% endif %}</p>
+    </div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.05rem">Recent observations</h2>
+      <span class="small muted">{{ sightings }} in the last 30 days</span></div>
+    <div class="card-body">
+      <div class="feed">
+        {% for event in recent_events %}
+        <div class="feed-item">
+          <span class="feed-marker" style="background:{% if event.severity == 'critical' %}var(--crit){% elif event.severity == 'high' %}var(--bad){% else %}var(--info){% endif %}"></span>
+          <div class="feed-body">
+            <div class="feed-title"><a href="{{ event.get_absolute_url }}">{{ event.title }}</a></div>
+            <div class="feed-meta tiny">{{ event.camera.name|default:"—" }} · {{ event.occurred_at|date:"j M, H:i" }}</div>
+          </div>
+          {{ event.severity|severity_badge }}
+        </div>
+        {% empty %}<p class="small muted center" style="margin:var(--sp-5) 0">No observations recorded for this person.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card card-pad">
+      <div class="upper">Recognition</div>
+      <div style="margin-top:var(--sp-3)">
+        {% if employee.is_enrolled %}
+          <span class="pill pill-ok">{{ employee.enrolment_status }}</span>
+          <dl class="kv" style="margin-top:var(--sp-3)">
+            <dt>Samples</dt><dd class="numeric">{{ employee.enrolment_samples }}</dd>
+            <dt>Model</dt><dd class="mono tiny">{{ employee.embedding_model }}</dd>
+            <dt>Enrolled</dt><dd>{{ employee.enrolled_at|date:"j M Y" }}</dd>
+            <dt>Vector size</dt><dd class="numeric">{{ employee.face_embedding|length }}-D</dd>
+          </dl>
+          <p class="tiny dim" style="margin-top:var(--sp-3)">
+            Only a mathematical signature is stored. The original photographs are not retained,
+            and a face cannot be reconstructed from this vector.
+          </p>
+          {% if 'employees.manage' in user_permissions %}
+          <form method="post" action="{% url 'dashboard:employee_unenroll' employee.uid %}" style="margin-top:var(--sp-3)"
+                data-confirm="Permanently erase the biometric data for {{ employee.full_name }}?">
+            {% csrf_token %}<button class="btn btn-sm btn-block" style="color:var(--bad)">Erase biometric data</button>
+          </form>
+          {% endif %}
+        {% else %}
+          <span class="pill pill-warn">{{ employee.enrolment_status }}</span>
+          {% if not employee.consent_given %}
+            <p class="small muted" style="margin-top:var(--sp-3)">
+              Record written consent on this person's profile before enrolling their face.
+              Biometric processing without documented consent is unlawful in most jurisdictions.
+            </p>
+          {% elif 'employees.enroll' in user_permissions and face_enabled %}
+            <a href="{% url 'dashboard:employee_enroll' employee.uid %}" class="btn btn-primary btn-sm btn-block" style="margin-top:var(--sp-3)">Enrol face</a>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="upper">Details</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        <dt>Code</dt><dd class="mono">{{ employee.employee_code|default:"—" }}</dd>
+        <dt>Email</dt><dd class="truncate" style="max-width:170px">{{ employee.email|default:"—" }}</dd>
+        <dt>Phone</dt><dd>{{ employee.phone|default:"—" }}</dd>
+        <dt>Sites</dt><dd>{% for site in employee.sites.all %}{{ site.name }}{% if not forloop.last %}, {% endif %}{% empty %}All sites{% endfor %}</dd>
+        <dt>Consent</dt><dd>{% if employee.consent_given %}<span class="pill pill-ok">Recorded {{ employee.consent_recorded_at|date:"j M Y" }}</span>{% else %}<span class="pill pill-warn">Not recorded</span>{% endif %}</dd>
+        <dt>Status</dt><dd>{% if employee.is_active %}Active{% else %}Inactive{% endif %}</dd>
+      </dl>
+      {% if employee.notes %}<p class="small muted" style="margin-top:var(--sp-3)">{{ employee.notes }}</p>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

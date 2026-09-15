@@ -1,0 +1,173 @@
+@page { size: A4; margin: 20mm 18mm 18mm 18mm; }
+
+
+:root{
+  --ink:#15201f; --ink-2:#4d625f; --ink-3:#7b8f8c;
+  --rule:#d2dedc; --rule-soft:#e7efee;
+  --accent:#0a6d64; --accent-soft:#e2f0ee;
+  --signal:#a8500a; --signal-soft:#fbefe2;
+  --bad:#a32418; --ok:#16703f;
+  --paper:#ffffff; --panel:#f4f8f7; --bezel:#101b1f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Source Serif 4",Georgia,"Times New Roman",serif;
+  font-size:10.4pt; line-height:1.55; color:var(--ink); background:var(--paper);
+  -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+h1,h2,h3,h4,.ui{font-family:"Archivo","Helvetica Neue",Arial,sans-serif}
+.mono,code,pre,td.num,.osd{font-family:"JetBrains Mono","DejaVu Sans Mono",Consolas,monospace}
+
+/* ---------- cover ---------- */
+.cover{
+  height:297mm; width:210mm; padding:38mm 26mm 24mm; page-break-after:always;
+  background:var(--bezel); color:#e8f2f0; display:flex; flex-direction:column;
+}
+.cover .mark{width:42px;height:42px;margin-bottom:26mm}
+.cover .brand{font-family:"Archivo",sans-serif;font-weight:700;font-size:13pt;letter-spacing:.02em;margin-bottom:auto}
+.cover .brand span{color:#4ec2b2}
+.cover .kind{
+  font-family:"JetBrains Mono",monospace;font-size:8.5pt;letter-spacing:.22em;
+  text-transform:uppercase;color:#4ec2b2;margin-bottom:9mm;
+}
+.cover h1{font-size:34pt;font-weight:700;line-height:1.05;letter-spacing:-.022em;margin:0 0 9mm;max-width:17ch}
+.cover .sub{font-size:12.5pt;color:#a9c4c0;max-width:44ch;line-height:1.5;margin:0 0 14mm}
+.cover .meta{
+  font-family:"JetBrains Mono",monospace;font-size:8pt;color:#6f918c;
+  letter-spacing:.06em;border-top:1px solid #24383c;padding-top:5mm;
+  display:flex;justify-content:space-between;gap:8mm;flex-wrap:wrap;
+}
+
+/* ---------- contents ---------- */
+.toc{page-break-after:always}
+.toc ol{list-style:none;counter-reset:c;padding:0;margin:0}
+.toc li{
+  counter-increment:c; display:flex; gap:5mm; align-items:baseline;
+  padding:3.2mm 0; border-bottom:1px solid var(--rule-soft);
+}
+.toc li::before{
+  content:counter(c,decimal-leading-zero);
+  font-family:"JetBrains Mono",monospace;font-size:8pt;color:var(--accent);font-weight:700;
+}
+.toc .t{font-family:"Archivo",sans-serif;font-weight:600;font-size:11pt}
+.toc .d{color:var(--ink-2);font-size:9.4pt;margin-left:auto;text-align:right;max-width:52%}
+
+/* ---------- structure ---------- */
+h1.chapter{
+  font-size:20pt;font-weight:700;letter-spacing:-.015em;line-height:1.14;
+  margin:0 0 3mm; padding-top:1mm;
+}
+.chapter-rule{border:0;border-top:2px solid var(--ink);margin:0 0 6mm}
+.eyebrow{
+  font-family:"JetBrains Mono",monospace;font-size:7.6pt;font-weight:700;
+  letter-spacing:.17em;text-transform:uppercase;color:var(--accent);margin-bottom:2.5mm;
+}
+section.chapter{page-break-before:always}
+section.chapter:first-of-type{page-break-before:avoid}
+h2{font-size:12.6pt;font-weight:700;margin:8mm 0 2.5mm;letter-spacing:-.01em;page-break-after:avoid}
+h3{font-size:10.6pt;font-weight:600;margin:5mm 0 1.5mm;page-break-after:avoid}
+p{margin:0 0 2.6mm;max-width:74ch}
+.lede{font-size:11.4pt;color:var(--ink-2);max-width:66ch;margin-bottom:5mm}
+ul,ol{margin:0 0 3mm;padding-left:5.5mm;max-width:72ch}
+li{margin-bottom:1.4mm}
+strong{font-weight:600}
+em{font-style:italic}
+a{color:var(--accent);text-decoration:none}
+code{font-size:8.8pt;background:var(--panel);padding:.4mm 1mm;border-radius:1mm;color:var(--ink)}
+
+/* ---------- tables ---------- */
+table{border-collapse:collapse;width:100%;font-size:9.2pt;margin:3mm 0 4mm;page-break-inside:avoid}
+th,td{text-align:left;padding:2.1mm 3mm;border-bottom:.4pt solid var(--rule-soft);vertical-align:top}
+thead th{
+  font-family:"JetBrains Mono",monospace;font-size:7.4pt;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:700;
+  background:var(--panel);border-bottom:.6pt solid var(--rule);
+}
+tbody tr:last-child td{border-bottom:.6pt solid var(--rule)}
+td.num{text-align:right;font-size:8.8pt;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.name{font-family:"Archivo",sans-serif;font-weight:600}
+
+/* ---------- code ---------- */
+pre{
+  background:var(--bezel);color:#cfe6e2;padding:3.5mm 4mm;border-radius:1.5mm;
+  font-size:8.3pt;line-height:1.62;margin:3mm 0 4mm;white-space:pre-wrap;
+  word-break:break-word;page-break-inside:avoid;
+}
+pre .c{color:#7ba49e}
+pre .k{color:#8fd6cb}
+
+/* ---------- callouts ---------- */
+.note,.warn,.key{
+  padding:3.4mm 4.5mm;border-radius:0 1.5mm 1.5mm 0;margin:4mm 0;
+  page-break-inside:avoid;font-size:9.6pt;
+}
+.note{border-left:2.5pt solid var(--accent);background:var(--accent-soft)}
+.warn{border-left:2.5pt solid var(--signal);background:var(--signal-soft)}
+.key{border-left:2.5pt solid var(--ink);background:var(--panel)}
+.note h4,.warn h4,.key h4{
+  font-family:"Archivo",sans-serif;font-size:9.8pt;font-weight:700;margin:0 0 1.5mm;
+}
+.note h4{color:var(--accent)} .warn h4{color:var(--signal)}
+.note p:last-child,.warn p:last-child,.key p:last-child{margin-bottom:0}
+
+/* ---------- numbered steps ---------- */
+.steps{counter-reset:step;margin:4mm 0}
+.step{
+  counter-increment:step;position:relative;padding:3mm 0 3mm 12mm;
+  border-top:.4pt solid var(--rule-soft);break-inside:avoid-page;
+}
+.step:last-child{border-bottom:.4pt solid var(--rule-soft)}
+.step::before{
+  content:counter(step,decimal-leading-zero);position:absolute;left:0;top:3.7mm;
+  font-family:"JetBrains Mono",monospace;font-size:8pt;font-weight:700;color:var(--accent);
+}
+.step h3{
+  margin:0 0 1mm;font-size:10.4pt;display:flex;align-items:baseline;
+  justify-content:space-between;gap:5mm;
+}
+.step p{margin:0 0 1.2mm;font-size:9.7pt;color:var(--ink-2)}
+.step .cost{
+  font-family:"JetBrains Mono",monospace;font-size:8pt;color:var(--ink-3);
+  font-weight:400;white-space:nowrap;flex:none;
+}
+
+/* ---------- diagram ---------- */
+.diagram{
+  background:var(--panel);border:.6pt solid var(--rule);border-radius:2mm;
+  padding:5mm;margin:4mm 0;page-break-inside:avoid;text-align:center;
+}
+.diagram svg{max-width:100%;height:auto}
+.diagram figcaption{
+  font-size:8.6pt;color:var(--ink-3);margin-top:3mm;text-align:left;
+}
+
+/* ---------- misc ---------- */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 7mm}
+.two.tight p{max-width:none}
+dl.defs{margin:3mm 0}
+dl.defs dt{font-family:"Archivo",sans-serif;font-weight:600;font-size:10pt;margin-top:3mm}
+dl.defs dd{margin:.6mm 0 0;color:var(--ink-2)}
+.tick{color:var(--ok);font-weight:600}
+.cross{color:var(--bad);font-weight:600}
+.footer-note{
+  margin-top:8mm;padding-top:3mm;border-top:.6pt solid var(--rule);
+  font-family:"JetBrains Mono",monospace;font-size:7.6pt;color:var(--ink-3);
+  letter-spacing:.05em;
+}
+
+
+/* Two-pass printing: the cover is rendered on its own with no margins or
+   footer, the body with both, and the two are merged. */
+body.only-cover .toc,
+body.only-cover section.chapter { display:none }
+body.no-cover .cover { display:none }
+body.only-cover { margin:0 }
+
+
+/* Print breaking: keep headings with what follows, and never strand one line. */
+p,li{orphans:2;widows:2}
+h2,h3,h4{break-after:avoid-page}
+.diagram,.note,.warn,.key,table,pre,.qa{break-inside:avoid-page}
+dl.defs dt{break-after:avoid-page}
+dl.defs dd{break-inside:avoid-page}

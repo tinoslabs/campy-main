@@ -1,0 +1,86 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if package %}Edit package{% else %}New package{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:admin_packages' %}">Packages</a> <span>/</span> <span>{% if package %}{{ package.name }}{% else %}New{% endif %}</span></div>
+  <h1>{% if package %}Edit “{{ package.name }}”{% else %}Create a package{% endif %}</h1>
+  <p class="subtitle">Features and quotas here drive what customers can actually do.</p>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="grid grid-2" style="align-items:start">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">Identity &amp; pricing</h2></div>
+        <div class="card-body">
+          {% include "partials/form_field.html" with field=form.name %}
+          {% include "partials/form_field.html" with field=form.tagline %}
+          {% include "partials/form_field.html" with field=form.description %}
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.price_inr %}
+            {% include "partials/form_field.html" with field=form.price_usd %}
+            {% include "partials/form_field.html" with field=form.interval %}
+            {% include "partials/form_field.html" with field=form.trial_days %}
+            {% include "partials/form_field.html" with field=form.setup_fee_inr %}
+            {% include "partials/form_field.html" with field=form.setup_fee_usd %}
+            {% include "partials/form_field.html" with field=form.per_camera_inr %}
+            {% include "partials/form_field.html" with field=form.per_camera_usd %}
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">Presentation &amp; gateways</h2></div>
+        <div class="card-body">
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.audience %}
+            {% include "partials/form_field.html" with field=form.sort_order %}
+            {% include "partials/form_field.html" with field=form.badge %}
+            {% include "partials/form_field.html" with field=form.colour %}
+            {% include "partials/form_field.html" with field=form.razorpay_plan_id %}
+            {% include "partials/form_field.html" with field=form.stripe_price_id %}
+          </div>
+          {% include "partials/form_field.html" with field=form.is_active %}
+          {% include "partials/form_field.html" with field=form.is_featured %}
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">Features</h2>
+          <span class="tiny dim">Gates what the workspace can use</span></div>
+        <div class="card-body">
+          {% for key, label in features %}
+          <label class="check">
+            <input type="checkbox" name="feature_{{ key }}" {% if current_features|get_item:key %}checked{% endif %}>
+            <span>{{ label }} <span class="mono tiny dim">{{ key }}</span></span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">Quotas</h2>
+          <span class="tiny dim">−1 means unlimited</span></div>
+        <div class="card-body">
+          <div class="form-grid">
+            {% for key, label in quotas %}
+            <div class="field">
+              <label for="quota_{{ key }}">{{ label }}</label>
+              <input type="number" class="input" id="quota_{{ key }}" name="quota_{{ key }}"
+                     value="{{ current_quotas|get_item:key|default:0 }}" min="-1">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="card-foot row">
+          <button type="submit" class="btn btn-primary">Save package</button>
+          <a href="{% url 'dashboard:admin_packages' %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

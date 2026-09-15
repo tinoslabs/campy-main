@@ -1,0 +1,6 @@
+.*
+docker-compose*
+docker/*
+!docker/app/requirements.txt
+!docker/app/start.sh
+!docker/app/prod_settings.py

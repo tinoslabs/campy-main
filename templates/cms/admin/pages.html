@@ -1,0 +1,39 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Pages{% endblock %}
+{% block topbar_actions %}<a href="{% url 'cms:cms_page_create' %}" class="btn btn-sm btn-primary">＋ New page</a>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:admin_cms' %}">Website</a> <span>/</span> <span>Pages</span></div>
+  <h1>Pages</h1><p class="subtitle">Marketing pages assembled from content blocks.</p>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Title</th><th>URL</th><th>Template</th><th>Blocks</th><th>Views</th><th>Status</th><th class="right">Actions</th></tr></thead>
+      <tbody>
+        {% for page in pages %}
+        <tr>
+          <td><a href="{% url 'cms:cms_page_edit' page.pk %}" class="semibold">{{ page.title }}</a>
+            {% if page.is_homepage %}<span class="pill pill-accent tiny">Home</span>{% endif %}
+            {% if page.show_in_navigation %}<span class="pill pill-muted tiny">In nav</span>{% endif %}</td>
+          <td class="mono tiny dim">/{{ page.slug }}/</td>
+          <td class="small">{{ page.get_template_display }}</td>
+          <td class="numeric">{{ page.block_count }}</td>
+          <td class="numeric small">{{ page.view_count }}</td>
+          <td>{{ page.status|status_pill }}</td>
+          <td class="actions">
+            <a href="{{ page.get_absolute_url }}" class="btn btn-sm btn-ghost" target="_blank" rel="noopener">View</a>
+            <form method="post" action="{% url 'cms:cms_page_publish' page.pk %}" style="display:inline">
+              {% csrf_token %}<button class="btn btn-sm">{% if page.is_published %}Unpublish{% else %}Publish{% endif %}</button></form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty"><div class="empty-icon" aria-hidden="true">✎</div>
+          <h3>No pages yet</h3><p>The built-in landing page is shown until you create one flagged as the homepage.</p>
+          <a href="{% url 'cms:cms_page_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Create a page</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

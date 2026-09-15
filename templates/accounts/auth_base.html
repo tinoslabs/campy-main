@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body %}
+<div class="auth-wrap">
+  <aside class="auth-side">
+    <img src="{% static 'brand/campy-ai-logo-dark.svg' %}" alt="{{ BRAND.name }}" style="height:38px;margin-bottom:var(--sp-6)">
+    <h2>{% block side_title %}Turn ordinary CCTV into workplace intelligence{% endblock %}</h2>
+    <p style="color:rgba(255,255,255,.86);font-size:1.02rem;line-height:1.7;max-width:420px">
+      {% block side_body %}
+      Campy AI watches the cameras you already own and tells you what needs attention —
+      restricted areas, crowding, unattended objects, fire and smoke, and unsafe movement.
+      {% endblock %}
+    </p>
+    <div style="margin-top:var(--sp-7)">
+      {% block side_extra %}
+      <div class="stack-sm" style="color:rgba(255,255,255,.9);font-size:.92rem">
+        <div>✓ Works with existing RTSP and ONVIF cameras</div>
+        <div>✓ Seven detectors, configurable per camera</div>
+        <div>✓ Train your own models on your own footage</div>
+        <div>✓ Consent-gated face recognition and audit logging</div>
+      </div>
+      {% endblock %}
+    </div>
+  </aside>
+  <main class="auth-main" id="main-content">
+    <div class="auth-card">
+      <div class="center" style="margin-bottom:var(--sp-5)">
+        <a href="{% url 'cms:home' %}"><img src="{% static BRAND.logo %}" alt="{{ BRAND.name }}" style="height:34px;margin:0 auto"></a>
+      </div>
+      {% include "partials/messages.html" %}
+      {% block auth_content %}{% endblock %}
+    </div>
+  </main>
+</div>
+{% endblock %}

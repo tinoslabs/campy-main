@@ -1,0 +1,353 @@
+{% extends "public/base.html" %}
+{% load static humanize %}
+
+{% block title %}{{ BRAND.name }} — {{ BRAND.tagline }}{% endblock %}
+{% block meta_description %}Campy AI turns the CCTV cameras you already own into an AI safety and security system: gesture tracking, face recognition, geofencing, crowd management, theft, dangerous objects and fire detection.{% endblock %}
+
+{% block public_content %}
+{# ---------------- Hero ---------------- #}
+<section class="hero">
+  <div class="container">
+    <div class="grid grid-2" style="align-items:center;gap:var(--sp-7)">
+      <div>
+        <span class="hero-eyebrow"><span class="dot dot-live"></span> Works with the cameras you already own</span>
+        <h1>Turn ordinary CCTV into <span class="gradient-text">workplace intelligence</span></h1>
+        <p class="lead">
+          Campy AI watches your existing camera feeds and turns them into clear, plain-language
+          insight — who is where, what is happening, and what needs attention right now.
+          No new hardware. No technical knowledge required.
+        </p>
+        <div class="row" style="margin-top:var(--sp-5)">
+          <a href="{% url 'accounts:signup' %}" class="btn btn-primary btn-lg">Start your free trial</a>
+          <a href="{% url 'cms:demo' %}" class="btn btn-lg">Book a live demo</a>
+        </div>
+        <p class="small muted" style="margin-top:var(--sp-4)">
+          No credit card required · Set up in minutes · Cancel any time
+        </p>
+      </div>
+
+      {# A live-looking product preview, drawn inline. #}
+      <div class="card" style="overflow:hidden;box-shadow:var(--shadow-3)">
+        <div style="background:#0c1220;padding:11px 14px;display:flex;gap:8px;align-items:center">
+          <span style="width:10px;height:10px;border-radius:50%;background:#ef4444"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#f59e0b"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#22c55e"></span>
+          <span style="color:#7b879f;font-size:.76rem;margin-left:8px;font-family:var(--mono)">campy.ai/app/live</span>
+        </div>
+        <div style="background:#0c1220;padding:14px">
+          <svg viewBox="0 0 400 240" style="width:100%;border-radius:8px" role="img" aria-label="Live camera view with detections">
+            <rect width="400" height="240" fill="#141c30"/>
+            <rect y="120" width="400" height="120" fill="#1b2540"/>
+            <rect x="280" y="60" width="120" height="130" fill="#2a3350"/>
+            <rect x="280" y="88" width="120" height="3" fill="#3a4568"/>
+            <rect x="280" y="130" width="120" height="3" fill="#3a4568"/>
+            <polygon points="270,70 400,70 400,200 270,200" fill="rgba(239,68,68,.14)" stroke="#ef4444" stroke-width="1.6" stroke-dasharray="5 3"/>
+            <text x="278" y="84" fill="#fca5a5" font-size="9" font-weight="600">RESTRICTED · SERVER ROOM</text>
+            <g>
+              <rect x="90" y="96" width="42" height="104" fill="none" stroke="#22d3ee" stroke-width="2" rx="3"/>
+              <rect x="88" y="82" width="86" height="15" fill="#22d3ee" rx="3"/>
+              <text x="93" y="93" fill="#062430" font-size="9" font-weight="700">Asha M · walking</text>
+              <circle cx="111" cy="106" r="9" fill="#c9a68d"/>
+              <rect x="99" y="118" width="24" height="52" fill="#3d4664" rx="3"/>
+            </g>
+            <g>
+              <rect x="300" y="104" width="40" height="96" fill="none" stroke="#f87171" stroke-width="2" rx="3"/>
+              <rect x="296" y="90" width="98" height="15" fill="#f87171" rx="3"/>
+              <text x="301" y="101" fill="#3d0a0a" font-size="9" font-weight="700">Unknown · in zone</text>
+              <circle cx="320" cy="114" r="8" fill="#b08a72"/>
+              <rect x="309" y="124" width="22" height="48" fill="#4a3040" rx="3"/>
+            </g>
+            <rect x="10" y="10" width="86" height="18" rx="9" fill="rgba(8,12,24,.8)"/>
+            <circle cx="21" cy="19" r="4" fill="#34d399"/>
+            <text x="30" y="23" fill="#e6ecf7" font-size="9" font-weight="600">LIVE · 6 fps</text>
+          </svg>
+          <div style="display:flex;gap:8px;margin-top:11px">
+            <div style="flex:1;background:#1b2540;border-radius:7px;padding:9px 11px">
+              <div style="color:#7b879f;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700">People</div>
+              <div style="color:#eef2f9;font-size:1.2rem;font-weight:700">2</div>
+            </div>
+            <div style="flex:1;background:#3d1416;border-radius:7px;padding:9px 11px">
+              <div style="color:#fca5a5;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700">Zone breach</div>
+              <div style="color:#fee2e2;font-size:1.2rem;font-weight:700">1</div>
+            </div>
+            <div style="flex:1;background:#1b2540;border-radius:7px;padding:9px 11px">
+              <div style="color:#7b879f;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700">Recognised</div>
+              <div style="color:#eef2f9;font-size:1.2rem;font-weight:700">1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ---------------- Problem framing ---------------- #}
+<section class="section section-muted">
+  <div class="container">
+    <div class="section-head">
+      <h2>Your cameras already record everything. Almost nobody watches.</h2>
+      <p class="lead">
+        Footage only helps after something has gone wrong — and only if somebody scrubs through
+        hours of it. Campy AI reads every frame as it happens and tells you the handful of things
+        that actually matter.
+      </p>
+    </div>
+    <div class="grid grid-3">
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">◷</div>
+        <h3>Before, not after</h3>
+        <p class="muted small">Smoke spotted as it starts. A restricted door opened as it happens. An alert in seconds, not a review next week.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">◉</div>
+        <h3>Every camera, all the time</h3>
+        <p class="muted small">One operator cannot watch forty screens. Campy AI watches all of them, every second, and never looks away.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">✎</div>
+        <h3>Plain language, not data</h3>
+        <p class="muted small">"Unauthorised entry into the server room at 21:14" — not a wall of numbers that needs an analyst to interpret.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ---------------- The seven capabilities ---------------- #}
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <h2>Seven kinds of awareness, on every camera</h2>
+      <p class="lead">Turn on only what a given camera needs. Each one works on ordinary CCTV footage.</p>
+    </div>
+    <div class="grid grid-auto-lg">
+      {% for item in analytics_preview %}
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">{{ item.icon }}</div>
+        <h3>{{ item.title }}</h3>
+        <p class="muted small">{{ item.body }}</p>
+      </div>
+      {% empty %}
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">🚶</div>
+          <h3>Employee gesture tracking</h3>
+          <p class="muted small">Walking, standing, sitting, bending, running or inactive for long periods. Patterns, not judgements — and an immediate flag if somebody appears to have fallen.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">⬡</div>
+          <h3>Geofencing</h3>
+          <p class="muted small">Draw a boundary around machinery, a stock room, a server rack or a staff-only area. Know the moment somebody crosses it who should not.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">👥</div>
+          <h3>Crowd management</h3>
+          <p class="muted small">See where people gather, how many, and whether the crowd is flowing or jammed — the difference between a busy corridor and a crush risk.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">🛡</div>
+          <h3>Theft detection</h3>
+          <p class="muted small">Highlights unusual object handling and stock changes for review. It flags risk for a human to check; it never accuses anybody.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">⚠</div>
+          <h3>Dangerous &amp; unattended objects</h3>
+          <p class="muted small">Sharp tools where they should not be, a bag left in a corridor, a spill nobody has cleared. Catches things left behind even when no class was ever trained for them.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">🔥</div>
+          <h3>Fire &amp; smoke detection</h3>
+          <p class="muted small">Sees fire the moment it is in frame, anywhere in the room — including high ceilings and outdoor areas where a smoke sensor is useless.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">☺</div>
+          <h3>Face recognition</h3>
+          <p class="muted small">Recognise your own team so alerts can say who, not just what. Consent-gated, and enrolment stores a mathematical signature — never a photograph.</p>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="center" style="margin-top:var(--sp-6)">
+      <a href="{% url 'cms:features' %}" class="btn btn-outline">See how each one works →</a>
+    </div>
+  </div>
+</section>
+
+{# ---------------- Own AI ---------------- #}
+<section class="section section-dark">
+  <div class="container">
+    <div class="grid grid-2" style="align-items:center;gap:var(--sp-7)">
+      <div>
+        <span class="hero-eyebrow" style="background:rgba(129,140,248,.16);color:#a5b4fc">Our own AI, not somebody else's API</span>
+        <h2>Train Campy AI on <span class="gradient-text">your</span> footage</h2>
+        <p class="muted" style="font-size:1.02rem;line-height:1.7">
+          Every model in Campy AI is ours end to end — the architecture, the training loop, the
+          weights format and the runtime. Nothing is sent to a third-party AI service, and your
+          footage never leaves your deployment.
+        </p>
+        <p class="muted" style="font-size:1.02rem;line-height:1.7">
+          That means you can build a detector for the thing <em>your</em> site cares about: your
+          uniform, your machinery, your stock, your definition of unsafe. Label a few hundred
+          frames in the browser, press train, watch the accuracy climb, and deploy it to every
+          camera with one click.
+        </p>
+        <div class="row" style="margin-top:var(--sp-5)">
+          <a href="{% url 'cms:features' %}" class="btn btn-primary">How training works</a>
+        </div>
+      </div>
+      <div class="card" style="background:#131a2e;border-color:#26314c;padding:var(--sp-5)">
+        <div class="row-between" style="margin-bottom:var(--sp-4)">
+          <div>
+            <div style="color:#7b879f;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700">Training job</div>
+            <div style="color:#eef2f9;font-weight:650">Warehouse fire detector v3</div>
+          </div>
+          <span class="pill pill-ok">Running</span>
+        </div>
+        <svg viewBox="0 0 320 110" style="width:100%" role="img" aria-label="Training accuracy rising across epochs">
+          <g stroke="#26314c" stroke-width="1">
+            <line x1="0" y1="20" x2="320" y2="20"/><line x1="0" y1="50" x2="320" y2="50"/>
+            <line x1="0" y1="80" x2="320" y2="80"/>
+          </g>
+          <polyline fill="none" stroke="#22d3ee" stroke-width="2.4" stroke-linejoin="round"
+            points="0,96 27,78 53,64 80,55 107,47 133,40 160,35 187,31 213,28 240,25 267,23 293,21 320,20"/>
+          <polyline fill="none" stroke="#818cf8" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="4 3"
+            points="0,99 27,84 53,71 80,62 107,54 133,48 160,43 187,39 213,37 240,34 267,32 293,31 320,30"/>
+        </svg>
+        <div class="chart-legend" style="margin-top:11px;color:#a9b4ca">
+          <span><span class="chart-swatch" style="background:#22d3ee"></span> Training accuracy</span>
+          <span><span class="chart-swatch" style="background:#818cf8"></span> Validation accuracy</span>
+        </div>
+        <div class="grid grid-3" style="margin-top:var(--sp-4);gap:9px">
+          <div style="background:#182136;border-radius:8px;padding:9px 11px">
+            <div style="color:#7b879f;font-size:.62rem;font-weight:700;text-transform:uppercase">Epoch</div>
+            <div style="color:#eef2f9;font-weight:680">24/30</div>
+          </div>
+          <div style="background:#182136;border-radius:8px;padding:9px 11px">
+            <div style="color:#7b879f;font-size:.62rem;font-weight:700;text-transform:uppercase">Val acc</div>
+            <div style="color:#34d399;font-weight:680">94.2%</div>
+          </div>
+          <div style="background:#182136;border-radius:8px;padding:9px 11px">
+            <div style="color:#7b879f;font-size:.62rem;font-weight:700;text-transform:uppercase">Params</div>
+            <div style="color:#eef2f9;font-weight:680">44.8k</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ---------------- Use cases ---------------- #}
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <h2>Built for real workplaces</h2>
+      <p class="lead">Offices, stores, banks, showrooms, hospitals, campuses, warehouses and service centres.</p>
+    </div>
+    <div class="grid grid-4">
+      <div class="card card-pad card-hover">
+        <h3 style="font-size:1rem">Warehouses</h3>
+        <p class="small muted">Protect inventory, enforce restricted zones around machinery, and spot stock leaving through the wrong door.</p>
+      </div>
+      <div class="card card-pad card-hover">
+        <h3 style="font-size:1rem">Educational campuses</h3>
+        <p class="small muted">Manage crowding at entrances and corridors during peak movement, and keep restricted areas restricted.</p>
+      </div>
+      <div class="card card-pad card-hover">
+        <h3 style="font-size:1rem">Retail &amp; showrooms</h3>
+        <p class="small muted">Understand footfall and dwell, and get a discreet prompt to review when handling looks unusual.</p>
+      </div>
+      <div class="card card-pad card-hover">
+        <h3 style="font-size:1rem">Manufacturing</h3>
+        <p class="small muted">Catch unsafe movement near machinery, PPE-free zones and fire risk before an incident report is needed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ---------------- Pricing preview ---------------- #}
+{% if packages %}
+<section class="section section-muted">
+  <div class="container">
+    <div class="section-head">
+      <h2>Straightforward pricing</h2>
+      <p class="lead">Start free. Upgrade when your camera count grows.</p>
+    </div>
+    <div class="grid grid-{{ packages|length|default:3 }}">
+      {% for package in packages %}
+      <div class="price-card {% if package.is_featured %}featured{% endif %}">
+        {% if package.badge %}<span class="price-badge">{{ package.badge }}</span>{% endif %}
+        <h3>{{ package.name }}</h3>
+        <p class="small muted">{{ package.tagline }}</p>
+        <div class="price-amount" style="margin-top:var(--sp-3)">
+          ₹{{ package.price_inr|floatformat:0|intcomma }}
+          <span style="font-size:.85rem;font-weight:500;color:var(--text-3)">/{{ package.get_interval_display|lower }}</span>
+        </div>
+        <ul class="price-features">
+          <li>{{ package.quotas.cameras|default:"0" }} cameras</li>
+          <li>{{ package.quotas.sites|default:"1" }} site{{ package.quotas.sites|pluralize }}</li>
+          {% for feature in package.feature_list|slice:":4" %}<li>{{ feature }}</li>{% endfor %}
+        </ul>
+        <a href="{% url 'accounts:signup' %}" class="btn {% if package.is_featured %}btn-primary{% endif %} btn-block">
+          {% if package.trial_days %}Start {{ package.trial_days }}-day trial{% else %}Get started{% endif %}
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="center" style="margin-top:var(--sp-5)">
+      <a href="{% url 'cms:pricing' %}" class="btn btn-outline">Compare every plan →</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- Testimonials ---------------- #}
+{% if testimonials %}
+<section class="section">
+  <div class="container">
+    <div class="section-head"><h2>What operators say</h2></div>
+    <div class="grid grid-3">
+      {% for item in testimonials %}
+      <div class="card card-pad">
+        <div style="color:#f59e0b;margin-bottom:var(--sp-3)">{% for _ in item.stars %}★{% endfor %}</div>
+        <p style="font-size:.95rem;line-height:1.65">“{{ item.quote }}”</p>
+        <div class="row" style="margin-top:var(--sp-4)">
+          <span class="avatar">{{ item.author_name|slice:":2"|upper }}</span>
+          <div>
+            <div class="semibold small">{{ item.author_name }}</div>
+            <div class="tiny dim">{{ item.author_title }}{% if item.company %}, {{ item.company }}{% endif %}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- Privacy ---------------- #}
+<section class="section section-muted">
+  <div class="container container-narrow center">
+    <h2>Monitoring people is a responsibility, not just a feature</h2>
+    <p class="lead">
+      Face recognition stays switched off until you record written consent for each person.
+      Enrolment stores a mathematical signature, never a photograph. Retention windows are
+      enforced automatically, faces of unenrolled people can be pixelated in stored evidence,
+      and every sensitive action is written to an audit log you can export.
+    </p>
+  </div>
+</section>
+
+{# ---------------- CTA ---------------- #}
+<section class="section">
+  <div class="container">
+    <div class="card card-pad center" style="background:linear-gradient(140deg,var(--indigo-600),var(--cyan-600));border:0;padding:var(--sp-7) var(--sp-5)">
+      <h2 style="color:#fff">Point it at one camera and see for yourself</h2>
+      <p style="color:rgba(255,255,255,.9);max-width:520px;margin:0 auto var(--sp-5);font-size:1.04rem">
+        Set up takes minutes. There is a simulated camera built in, so you can watch every
+        detector work before you connect a single real stream.
+      </p>
+      <div class="row" style="justify-content:center">
+        <a href="{% url 'accounts:signup' %}" class="btn btn-lg" style="background:#fff;color:var(--indigo-700);border-color:#fff">Start free</a>
+        <a href="{% url 'cms:demo' %}" class="btn btn-lg" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.6)">Book a demo</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

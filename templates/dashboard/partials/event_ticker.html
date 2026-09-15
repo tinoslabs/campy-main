@@ -1,0 +1,13 @@
+<div class="feed">
+  {% for event in recent_events %}
+  <div class="feed-item">
+    <span class="feed-marker" style="background:{% if event.severity == 'critical' %}var(--crit){% elif event.severity == 'high' %}var(--bad){% elif event.severity == 'medium' %}var(--warn){% else %}var(--info){% endif %}"></span>
+    <div class="feed-body">
+      <div class="feed-title" style="font-size:.85rem"><a href="{{ event.get_absolute_url }}">{{ event.title|truncatechars:46 }}</a></div>
+      <div class="feed-meta tiny">{{ event.camera.name|default:"—" }} · {{ event.occurred_at|ago }}</div>
+    </div>
+  </div>
+  {% empty %}
+  <p class="small muted center" style="margin:var(--sp-4) 0">Nothing in the last two hours.</p>
+  {% endfor %}
+</div>

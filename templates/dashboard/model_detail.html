@@ -1,0 +1,118 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}{{ version.name }}{% endblock %}
+{% block topbar_actions %}
+{% if can_deploy and not version.is_deployed and not version.is_base_model %}
+  <form method="post" action="{% url 'dashboard:model_deploy' version.uid %}">{% csrf_token %}
+    <button class="btn btn-sm btn-primary">Deploy to production</button></form>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:models' %}">Models</a> <span>/</span> <span>{{ version.name }}</span></div>
+  <div class="row row-tight">{{ version.status|status_pill }}
+    <span class="pill pill-muted">{{ version.slot_label }}</span>
+    <span class="pill pill-muted">{{ version.architecture }}</span>
+    {% if version.is_base_model %}<span class="pill pill-info">Campy AI base model</span>{% endif %}</div>
+  <h1 style="margin-top:var(--sp-2)">{{ version.name }} <span class="dim" style="font-weight:400">v{{ version.version }}</span></h1>
+  <p class="subtitle">Trained {{ version.created_at|date:"j F Y, H:i" }}{% if version.dataset %} on {{ version.dataset.name }}{% endif %}</p>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-5)">
+  <div class="stat"><div class="stat-label">Accuracy</div><div class="stat-value">{{ version.accuracy|pct }}</div></div>
+  <div class="stat"><div class="stat-label">F1 score</div><div class="stat-value">{{ version.f1_score|pct }}</div></div>
+  <div class="stat"><div class="stat-label">Parameters</div><div class="stat-value" style="font-size:1.5rem">{{ version.parameter_count|intcomma }}</div></div>
+  <div class="stat"><div class="stat-label">Inference</div><div class="stat-value" style="font-size:1.5rem">{{ version.inference_ms|floatformat:1 }} ms</div>
+    <div class="stat-meta">per frame, one CPU core</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="stack">
+    {% if per_class %}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Per-class performance</h2></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr></thead>
+          <tbody>
+            {% for row in per_class %}
+            <tr>
+              <td class="semibold">{{ row.class }}</td>
+              <td class="numeric">{{ row.precision|pct }}</td>
+              <td class="numeric">{{ row.recall|pct }}</td>
+              <td class="numeric">{{ row.f1|pct }}</td>
+              <td class="numeric">{{ row.support }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-foot">
+        <p class="tiny dim" style="margin:0">
+          Recall is what matters for safety detection: a missed fire costs far more than a false alarm.
+        </p>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if architecture %}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Architecture</h2>
+        <span class="small dim">{{ architecture|length }} layers</span></div>
+      <div class="table-wrap" style="max-height:420px;overflow-y:auto">
+        <table class="data">
+          <thead><tr><th>Layer</th><th class="right">Parameters</th></tr></thead>
+          <tbody>
+            {% for layer in architecture %}
+            <tr><td class="mono small">{{ layer.name }}</td><td class="right numeric small">{{ layer.params|intcomma }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="stack">
+    <div class="card card-pad">
+      <div class="upper">Details</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        <dt>Slot</dt><dd class="mono tiny">{{ version.slot }}</dd>
+        <dt>Family</dt><dd class="mono tiny">{{ version.architecture }}</dd>
+        <dt>Task</dt><dd>{{ version.get_task_display }}</dd>
+        <dt>Input size</dt><dd class="numeric">{{ version.input_size }}px</dd>
+        <dt>Classes</dt><dd>{{ version.classes|join:", "|default:"—" }}</dd>
+        <dt>File size</dt><dd>{{ version.size_label }}</dd>
+        <dt>Training run</dt><dd>{% if version.job %}<a href="{{ version.job.get_absolute_url }}">{{ version.job.name }}</a>{% else %}—{% endif %}</dd>
+        <dt>Deployed</dt><dd>{{ version.deployed_at|date:"j M Y, H:i"|default:"Not deployed" }}</dd>
+        <dt>On disk</dt><dd>{% if version.exists_on_disk %}<span class="pill pill-ok">Present</span>{% else %}<span class="pill pill-bad">Missing</span>{% endif %}</dd>
+      </dl>
+    </div>
+
+    {% if version.evaluation %}
+    <div class="card card-pad">
+      <div class="upper">Evaluation</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        {% for key, value in version.evaluation.items %}
+          {% if key != 'per_class' %}<dt class="mono tiny">{{ key }}</dt><dd class="mono tiny">{{ value }}</dd>{% endif %}
+        {% endfor %}
+      </dl>
+    </div>
+    {% endif %}
+
+    {% if can_deploy %}
+      {% if version.is_deployed %}
+      <form method="post" action="{% url 'dashboard:model_retire' version.uid %}"
+            data-confirm="Roll back this model?">
+        {% csrf_token %}<button class="btn btn-block">Roll back this version</button>
+      </form>
+      {% elif not version.is_base_model %}
+      <form method="post" action="{% url 'dashboard:model_deploy' version.uid %}">
+        {% csrf_token %}<button class="btn btn-primary btn-block btn-lg">Deploy to production</button>
+      </form>
+      <p class="tiny dim center">Takes effect on every camera using the {{ version.slot_label }} slot, immediately.</p>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

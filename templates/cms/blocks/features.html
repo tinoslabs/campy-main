@@ -1,0 +1,19 @@
+<section class="section {% if block.background == 'dark' %}section-dark{% elif block.background == 'muted' %}section-muted{% endif %}">
+  <div class="container">
+    {% if block.heading %}
+    <div class="section-head">
+      <h2>{{ block.heading }}</h2>
+      {% if block.subheading %}<p class="lead">{{ block.subheading }}</p>{% endif %}
+    </div>
+    {% endif %}
+    <div class="grid grid-auto">
+      {% for item in block.items %}
+      <div class="feature-card">
+        {% if item.icon %}<div class="feature-icon" aria-hidden="true">{{ item.icon }}</div>{% endif %}
+        <h3>{{ item.title }}</h3>
+        <p class="muted small">{{ item.body }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

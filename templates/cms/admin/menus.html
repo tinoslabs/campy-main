@@ -1,0 +1,45 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Navigation menus{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:admin_cms' %}">Website</a> <span>/</span> <span>Menus</span></div>
+  <h1>Navigation menus</h1><p class="subtitle">Header and footer links on the public site.</p>
+</div>
+<div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:var(--sp-5);align-items:start">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.02rem">Add a link</h2></div>
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "partials/form.html" %}
+        <button type="submit" class="btn btn-primary btn-block">Add link</button>
+      </form>
+    </div>
+  </div>
+  <div class="stack">
+    {% for menu in menus %}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">{{ menu.name }}</h2>
+        <span class="pill pill-muted">{{ menu.get_location_display }}</span></div>
+      <div class="card-body">
+        <div class="stack-sm">
+          {% for item in menu.root_items %}
+          <div class="row-between panel">
+            <div>
+              <span class="semibold small">{{ item.label }}</span>
+              <div class="mono tiny dim">{{ item.resolved_url }}</div>
+            </div>
+            <form method="post" action="{% url 'cms:cms_menu_item_delete' item.pk %}" data-confirm="Remove '{{ item.label }}'?">
+              {% csrf_token %}<button class="btn btn-sm btn-ghost" style="color:var(--bad)">×</button></form>
+          </div>
+          {% empty %}<p class="small muted">No links in this menu — defaults are used.</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty card"><div class="empty-icon" aria-hidden="true">☰</div>
+      <h3>No menus defined</h3><p>Until you add one, the site uses its built-in navigation.</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

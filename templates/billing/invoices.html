@@ -1,0 +1,27 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Invoices{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Invoices</h1></div>
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Number</th><th>Issued</th><th>Package</th><th>Subtotal</th><th>Tax</th><th>Total</th><th>Status</th><th class="right"></th></tr></thead>
+      <tbody>
+        {% for invoice in invoices %}
+        <tr>
+          <td class="mono small"><a href="{{ invoice.get_absolute_url }}">{{ invoice.number }}</a></td>
+          <td class="small nowrap">{{ invoice.issued_at|date:"j M Y" }}</td>
+          <td class="small">{{ invoice.package.name|default:"—" }}</td>
+          <td class="numeric small">{{ invoice.currency_symbol }}{{ invoice.subtotal|floatformat:2 }}</td>
+          <td class="numeric small">{{ invoice.currency_symbol }}{{ invoice.tax_amount|floatformat:2 }}</td>
+          <td class="numeric semibold">{{ invoice.currency_symbol }}{{ invoice.total|floatformat:2 }}</td>
+          <td>{{ invoice.status|status_pill }}{% if invoice.is_overdue %}<span class="pill pill-bad">Overdue</span>{% endif %}</td>
+          <td class="actions"><a href="{{ invoice.get_absolute_url }}" class="btn btn-sm btn-ghost">View</a></td>
+        </tr>
+        {% empty %}<tr><td colspan="8" class="center muted" style="padding:var(--sp-6)">No invoices yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Testimonials{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:admin_cms' %}">Website</a> <span>/</span> <span>Testimonials</span></div>
+  <h1>Testimonials</h1>
+</div>
+<div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:var(--sp-5);align-items:start">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.02rem">Add new</h2></div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% include "partials/form.html" %}
+        <button type="submit" class="btn btn-primary btn-block">Add</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.02rem">Published</h2></div>
+    <div class="card-body">
+      <div class="stack-sm">
+        {% for item in testimonials %}
+        <div class="panel">
+          <div class="row-between">
+            <span class="semibold small">{{ item.author_name }}{% if item.company %} · {{ item.company }}{% endif %}</span>
+            <span style="color:#f59e0b">{% for _ in item.stars %}★{% endfor %}</span>
+          </div>
+          <p class="small muted" style="margin:6px 0 0">“{{ item.quote|truncatechars:160 }}”</p>
+        </div>
+        {% empty %}<p class="small muted">Nothing added yet.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

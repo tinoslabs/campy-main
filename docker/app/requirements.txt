@@ -1,0 +1,4 @@
+# Deployment
+gunicorn==22.0.0
+python-decouple==3.8
+# redis==5.0.1

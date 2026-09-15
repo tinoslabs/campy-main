@@ -1,0 +1,41 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Roles &amp; permissions{% endblock %}
+{% block content %}
+<div class="page-head row-between">
+  <div>
+    <div class="breadcrumbs"><a href="{% url 'dashboard:team' %}">Team</a> <span>/</span> <span>Roles</span></div>
+    <h1>Roles &amp; permissions</h1>
+    <p class="subtitle">Every person gets a role. A role is a bundle of permissions.</p>
+  </div>
+  <a href="{% url 'accounts:role_create' %}" class="btn btn-primary">＋ Create role</a>
+</div>
+
+<div class="grid grid-auto-lg">
+  {% for role in roles %}
+  <div class="card card-pad">
+    <div class="row-between">
+      <div class="row row-tight">
+        <span class="dot" style="color:{{ role.color }};width:11px;height:11px"></span>
+        <h3 style="margin:0;font-size:1.05rem">{{ role.name }}</h3>
+      </div>
+      {% if role.is_system %}<span class="pill pill-muted">Built-in</span>{% endif %}
+    </div>
+    <p class="small muted" style="margin-top:var(--sp-2)">{{ role.description }}</p>
+    <div class="row-between" style="margin-top:var(--sp-4)">
+      <span class="small"><strong>{{ role.permission_count }}</strong> permission{{ role.permission_count|pluralize }}</span>
+      <span class="small"><strong>{{ role.member_count }}</strong> member{{ role.member_count|pluralize }}</span>
+    </div>
+    <div class="row" style="margin-top:var(--sp-4)">
+      {% if role.code != 'owner' %}
+        <a href="{% url 'accounts:role_edit' role.uid %}" class="btn btn-sm">{% if role.is_system %}View &amp; adjust{% else %}Edit{% endif %}</a>
+      {% endif %}
+      {% if not role.is_system and not role.member_count %}
+        <form method="post" action="{% url 'accounts:role_delete' role.uid %}" data-confirm="Delete the role '{{ role.name }}'?">
+          {% csrf_token %}<button type="submit" class="btn btn-sm btn-ghost" style="color:var(--bad)">Delete</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

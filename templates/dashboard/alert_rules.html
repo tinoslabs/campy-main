@@ -1,0 +1,89 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Alert rules{% endblock %}
+{% block topbar_actions %}
+{% if 'alerts.manage' in user_permissions %}<a href="{% url 'dashboard:alert_rule_create' %}" class="btn btn-sm btn-primary">＋ New rule</a>{% endif %}
+{% if 'alerts.channels' in user_permissions %}<a href="{% url 'dashboard:channel_create' %}" class="btn btn-sm">＋ Channel</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Alerting</h1><p class="subtitle">Who gets told about what, through which channel, and how quickly.</p></div>
+
+<h2 style="font-size:1.1rem">Rules</h2>
+<div class="card" style="margin-bottom:var(--sp-6)">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Rule</th><th>Matches</th><th>Channels</th><th>Cooldown</th><th>Escalation</th><th>Fired</th><th>Status</th><th class="right">Actions</th></tr></thead>
+      <tbody>
+        {% for rule in rules %}
+        <tr>
+          <td><span class="semibold">{{ rule.name }}</span><div class="tiny dim">{{ rule.description|truncatechars:60 }}</div></td>
+          <td class="small">
+            {{ rule.min_severity|severity_badge }} and above
+            <div class="tiny dim">
+              {% if rule.analytics %}{{ rule.analytics|join:", " }}{% else %}all analytics{% endif %}
+              {% if rule.threshold_count > 1 %}· {{ rule.threshold_count }}× in {{ rule.threshold_window_seconds }}s{% endif %}
+            </div>
+            {% if rule.active_schedule %}<div class="tiny" style="color:var(--warn)">scheduled</div>{% endif %}
+          </td>
+          <td><div class="row row-tight">{% for channel in rule.channels.all %}<span class="chip tiny">{{ channel.get_kind_display }}</span>{% empty %}<span class="tiny dim">in-app only</span>{% endfor %}</div></td>
+          <td class="small numeric">{{ rule.cooldown_seconds }}s</td>
+          <td class="small">{% if rule.escalate_after_seconds %}after {{ rule.escalate_after_seconds|duration }}{% else %}—{% endif %}</td>
+          <td class="numeric small">{{ rule.fire_count }}<div class="tiny dim">{{ rule.last_fired_at|ago }}</div></td>
+          <td>{% if rule.is_active %}<span class="pill pill-ok">Active</span>{% else %}<span class="pill pill-muted">Paused</span>{% endif %}</td>
+          <td class="actions">
+            {% if 'alerts.manage' in user_permissions %}
+              <a href="{% url 'dashboard:alert_rule_detail' rule.uid %}" class="btn btn-sm btn-ghost">Edit</a>
+              <form method="post" action="{% url 'dashboard:alert_rule_delete' rule.uid %}" style="display:inline" data-confirm="Delete '{{ rule.name }}'?">
+                {% csrf_token %}<button class="btn btn-sm btn-ghost" style="color:var(--bad)">Delete</button></form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty">
+          <div class="empty-icon" aria-hidden="true">◈</div><h3>No alert rules yet</h3>
+          <p>Without a rule, findings are recorded but nobody is notified. Create one to route alerts.</p>
+          {% if 'alerts.manage' in user_permissions %}<a href="{% url 'dashboard:alert_rule_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Create a rule</a>{% endif %}
+        </div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h2 style="font-size:1.1rem">Notification channels</h2>
+<div class="grid grid-auto">
+  {% for channel in channels %}
+  <div class="card card-pad">
+    <div class="row-between">
+      <div>
+        <h3 style="margin:0;font-size:1rem">{{ channel.name }}</h3>
+        <span class="pill pill-muted">{{ channel.get_kind_display }}</span>
+      </div>
+      {% if channel.health == 'healthy' %}<span class="pill pill-ok">Healthy</span>
+      {% elif channel.health == 'failing' %}<span class="pill pill-bad">Failing</span>
+      {% else %}<span class="pill pill-muted">Untested</span>{% endif %}
+    </div>
+    <p class="small muted truncate" style="margin-top:var(--sp-2)">{{ channel.target_summary }}</p>
+    <div class="row-between tiny dim" style="margin-top:var(--sp-3)">
+      <span>{{ channel.success_count }} sent · {{ channel.failure_count }} failed</span>
+      <span>{{ channel.last_used_at|ago }}</span>
+    </div>
+    {% if channel.last_error %}<p class="tiny" style="color:var(--bad);margin-top:6px">{{ channel.last_error|truncatechars:80 }}</p>{% endif %}
+    {% if 'alerts.channels' in user_permissions %}
+    <div class="row" style="margin-top:var(--sp-4)">
+      <a href="{% url 'dashboard:channel_edit' channel.uid %}" class="btn btn-sm">Edit</a>
+      <form method="post" action="{% url 'dashboard:channel_test' channel.uid %}">{% csrf_token %}
+        <button class="btn btn-sm btn-outline">Send test</button></form>
+      <form method="post" action="{% url 'dashboard:channel_delete' channel.uid %}" data-confirm="Delete channel '{{ channel.name }}'?">
+        {% csrf_token %}<button class="btn btn-sm btn-ghost" style="color:var(--bad)">Delete</button></form>
+    </div>
+    {% endif %}
+  </div>
+  {% empty %}
+  <div class="empty card" style="grid-column:1/-1">
+    <div class="empty-icon" aria-hidden="true">✉</div><h3>No channels configured</h3>
+    <p>Add an email, Slack, Telegram, SMS or webhook destination for your alerts.</p>
+    {% if 'alerts.channels' in user_permissions %}<a href="{% url 'dashboard:channel_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Add a channel</a>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

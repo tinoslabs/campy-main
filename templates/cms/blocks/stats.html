@@ -1,0 +1,13 @@
+<section class="section {% if block.background == 'dark' %}section-dark{% else %}section-muted{% endif %}">
+  <div class="container">
+    {% if block.heading %}<div class="section-head"><h2>{{ block.heading }}</h2></div>{% endif %}
+    <div class="grid grid-4">
+      {% for item in block.items %}
+      <div class="center">
+        <div class="price-amount gradient-text">{{ item.value }}</div>
+        <div class="muted small" style="margin-top:6px">{{ item.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

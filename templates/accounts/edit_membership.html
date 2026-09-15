@@ -1,0 +1,20 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Edit member{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:team' %}">Back</a> <span>/</span> <span>Edit member</span></div>
+  <h1>Edit member</h1><p class="subtitle">Change this person's role, title and site access.</p>
+</div>
+<div class="card" style="max-width:720px">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% include "partials/form.html" %}
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'dashboard:team' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

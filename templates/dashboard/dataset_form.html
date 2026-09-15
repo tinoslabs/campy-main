@@ -1,0 +1,61 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if dataset %}Edit dataset{% else %}New dataset{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:datasets' %}">Datasets</a> <span>/</span> <span>{% if dataset %}{{ dataset.name }}{% else %}New{% endif %}</span></div>
+  <h1>{% if dataset %}Edit “{{ dataset.name }}”{% else %}Create a dataset{% endif %}</h1>
+  <p class="subtitle">Define what you want the model to tell apart.</p>
+</div>
+<div class="grid grid-2" style="align-items:start">
+  <div class="card">
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "partials/form_field.html" with field=form.name %}
+        {% include "partials/form_field.html" with field=form.description %}
+        {% include "partials/form_field.html" with field=form.class_names %}
+        <div class="form-grid">
+          {% include "partials/form_field.html" with field=form.task %}
+          {% include "partials/form_field.html" with field=form.image_size %}
+          {% include "partials/form_field.html" with field=form.validation_split %}
+        </div>
+        <fieldset>
+          <legend>Augmentation</legend>
+          <p class="help" style="margin-top:0">Customers train on a few hundred frames from a handful of cameras.
+            Without augmentation the model memorises one camera's lighting and fails on the next.</p>
+          {% include "partials/form_field.html" with field=form.augment_flip %}
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.augment_brightness %}
+            {% include "partials/form_field.html" with field=form.augment_noise %}
+            {% include "partials/form_field.html" with field=form.augment_shift %}
+          </div>
+        </fieldset>
+        {% include "partials/form_field.html" with field=form.harvest_from_events %}
+        <div class="row">
+          <button type="submit" class="btn btn-primary">Save dataset</button>
+          <a href="{% url 'dashboard:datasets' %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="stack">
+    <div class="card card-pad">
+      <div class="upper">Choosing classes</div>
+      <p class="small muted" style="margin-top:var(--sp-3)">
+        Put the "nothing happening" class <strong>first</strong>. It is used as the negative class
+        when importing dismissed false alarms, and it is usually the biggest class by far.
+      </p>
+      <div class="code-block" style="margin-top:var(--sp-3)">normal, fire, smoke
+normal, helmet, no_helmet
+empty, box, pallet, spill</div>
+    </div>
+    <div class="card card-pad">
+      <div class="upper">How much data?</div>
+      <p class="small muted" style="margin-top:var(--sp-3)">
+        Around 100–300 labelled frames per class gets a usable model for a fixed camera. Frames from
+        different times of day matter more than raw volume — that is what makes it survive dusk.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

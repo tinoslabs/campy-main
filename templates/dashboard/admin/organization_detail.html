@@ -1,0 +1,105 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}{{ org.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:admin_organizations' %}">Organisations</a> <span>/</span> <span>{{ org.name }}</span></div>
+  <div class="row-between">
+    <div>
+      <div class="row row-tight">{{ org.status|status_pill }}<span class="pill pill-muted">{{ org.get_industry_display }}</span></div>
+      <h1 style="margin-top:var(--sp-2)">{{ org.name }}</h1>
+      <p class="subtitle">{{ org.contact_email }} · joined {{ org.created_at|date:"j F Y" }}</p>
+    </div>
+    <form method="post" action="{% url 'dashboard:admin_organization_status' org.slug %}" class="row row-tight">
+      {% csrf_token %}
+      <select name="status" class="input" style="width:auto">
+        {% for value, label in org.Status.choices %}<option value="{{ value }}" {% if org.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-sm">Update status</button>
+    </form>
+  </div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-5)">
+  <div class="stat"><div class="stat-label">Cameras</div><div class="stat-value">{{ cameras|length }}</div></div>
+  <div class="stat"><div class="stat-label">Members</div><div class="stat-value">{{ memberships|length }}</div></div>
+  <div class="stat"><div class="stat-label">Events · 30d</div><div class="stat-value">{{ events_30d|intcomma }}</div></div>
+  <div class="stat"><div class="stat-label">Package</div><div class="stat-value" style="font-size:1.15rem">{{ subscription.package.name|default:"None" }}</div>
+    <div class="stat-meta">{{ subscription.get_status_display|default:"—" }}</div></div>
+</div>
+
+<div class="grid grid-2" style="align-items:start">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Members</h2></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Person</th><th>Role</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for membership in memberships %}
+            <tr><td class="small">{{ membership.user.get_full_name }}<div class="tiny dim">{{ membership.user.email }}</div></td>
+              <td><span class="pill pill-muted">{{ membership.role.name }}</span></td>
+              <td>{{ membership.status|status_pill }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Cameras</h2></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Camera</th><th>Site</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for camera in cameras %}
+            <tr><td class="small">{{ camera.name }}</td><td class="small">{{ camera.site.name }}</td><td>{{ camera.status|status_pill }}</td></tr>
+            {% empty %}<tr><td colspan="3" class="center muted">No cameras.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card card-pad">
+      <div class="upper">Subscription</div>
+      {% if subscription %}
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        <dt>Package</dt><dd>{{ subscription.package.name }}</dd>
+        <dt>Status</dt><dd>{{ subscription.status|status_pill }}</dd>
+        <dt>Gateway</dt><dd>{{ subscription.get_gateway_display }}</dd>
+        <dt>Currency</dt><dd>{{ subscription.currency }}</dd>
+        <dt>Amount</dt><dd class="numeric">{{ subscription.amount }}</dd>
+        <dt>Period ends</dt><dd>{{ subscription.current_period_end|date:"j M Y" }}</dd>
+      </dl>
+      {% else %}<p class="small muted" style="margin-top:var(--sp-3)">No active subscription.</p>{% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Invoices</h2></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Number</th><th>Total</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for invoice in invoices %}
+            <tr><td class="mono tiny">{{ invoice.number }}</td>
+              <td class="numeric small">{{ invoice.currency_symbol }}{{ invoice.total|floatformat:2 }}</td>
+              <td>{{ invoice.status|status_pill }}</td></tr>
+            {% empty %}<tr><td colspan="3" class="center muted">No invoices.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="upper">Contact</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        <dt>Email</dt><dd class="truncate" style="max-width:180px">{{ org.contact_email|default:"—" }}</dd>
+        <dt>Phone</dt><dd>{{ org.contact_phone|default:"—" }}</dd>
+        <dt>Address</dt><dd>{{ org.address|default:"—" }}</dd>
+        <dt>Tax ID</dt><dd class="mono">{{ org.tax_id|default:"—" }}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+{% endblock %}

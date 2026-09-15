@@ -1,0 +1,40 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if channel %}Edit channel{% else %}New channel{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:alert_rules' %}">Alerting</a> <span>/</span> <span>{% if channel %}{{ channel.name }}{% else %}New channel{% endif %}</span></div>
+  <h1>{% if channel %}Edit “{{ channel.name }}”{% else %}Add a notification channel{% endif %}</h1>
+  <p class="subtitle">Where alerts are delivered. Fill in only the fields for the type you pick.</p>
+</div>
+<div class="card" style="max-width:720px">
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "partials/form.html" %}
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Save channel</button>
+        <a href="{% url 'dashboard:alert_rules' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+(function(){
+  var kind = document.getElementById('id_kind');
+  if (!kind) return;
+  var groups = {
+    email: ['emails'], webhook: ['url','secret'], slack: ['url'],
+    telegram: ['bot_token','chat_id'], sms: ['gateway_url','numbers'], inapp: []
+  };
+  var all = ['emails','url','secret','bot_token','chat_id','gateway_url','numbers'];
+  function sync(){
+    var shown = groups[kind.value] || [];
+    all.forEach(function(name){
+      var el = document.getElementById('id_' + name);
+      if (el) { var f = el.closest('.field'); if (f) f.hidden = shown.indexOf(name) === -1; }
+    });
+  }
+  kind.addEventListener('change', sync); sync();
+})();
+</script>
+{% endblock %}

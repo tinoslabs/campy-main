@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" role="img" aria-label="Campy AI">
+  <defs>
+    <linearGradient id="campyGradDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="55%" stop-color="#a5b4fc"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(4,8)">
+    <rect x="0" y="0" width="48" height="48" rx="14" fill="url(#campyGradDark)"/>
+    <circle cx="24" cy="24" r="13.5" fill="none" stroke="#0b1020" stroke-width="2.6" opacity="0.9"/>
+    <circle cx="24" cy="24" r="5" fill="#0b1020"/>
+    <g stroke="#0b1020" stroke-width="2.6" stroke-linecap="round" opacity="0.9">
+      <path d="M24 4.5v5"/><path d="M24 38.5v5"/>
+      <path d="M4.5 24h5"/><path d="M38.5 24h5"/>
+    </g>
+  </g>
+  <text x="66" y="41" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="27" font-weight="700" fill="#f8fafc" letter-spacing="-0.6">Campy</text>
+  <text x="176" y="41" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="27" font-weight="700" fill="url(#campyGradDark)" letter-spacing="-0.4">AI</text>
+</svg>

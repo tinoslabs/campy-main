@@ -1,0 +1,145 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{{ event.title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:events' %}">Events</a> <span>/</span> <span>{{ event.event_type }}</span></div>
+  <div class="row-between">
+    <div>
+      <div class="row row-tight">{{ event.severity|severity_badge }}{{ event.status|status_pill }}
+        <span class="pill pill-muted">{{ event.analytic_label }}</span>
+      </div>
+      <h1 style="margin-top:var(--sp-2)">{{ event.title }}</h1>
+      <p class="subtitle">{{ event.occurred_at|date:"l j F Y, H:i:s" }} · {{ event.occurred_at|ago }}</p>
+    </div>
+    <div class="row">
+      {% if event.is_open and 'events.acknowledge' in user_permissions %}
+      <form method="post" action="{% url 'dashboard:event_action' event.uid 'acknowledge' %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button class="btn">Acknowledge</button>
+      </form>
+      {% endif %}
+      {% if event.is_actionable and 'events.resolve' in user_permissions %}
+      <form method="post" action="{% url 'dashboard:event_action' event.uid 'resolve' %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button class="btn btn-primary">Resolve</button>
+      </form>
+      <form method="post" action="{% url 'dashboard:event_action' event.uid 'false_positive' %}"
+            data-confirm="Mark this as a false alarm? The frame can then be used as a hard negative for retraining.">
+        {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+        <button class="btn btn-ghost">False alarm</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Evidence</h2>
+        {% if event.snapshot %}<span class="small dim">{{ event.snapshot.width }}×{{ event.snapshot.height }}</span>{% endif %}
+      </div>
+      <div class="card-body card-body-flush">
+        <div class="camera-view" style="aspect-ratio:16/9;border-radius:0">
+          {% if event.snapshot and event.snapshot.image %}
+            <img src="{{ event.snapshot.image.url }}" alt="Snapshot of {{ event.title }}">
+            {% if event.bounding_box %}
+              <svg class="camera-overlay" viewBox="0 0 {{ event.snapshot.width|default:640 }} {{ event.snapshot.height|default:360 }}" preserveAspectRatio="none">
+                <rect x="{{ event.bounding_box.0 }}" y="{{ event.bounding_box.1 }}"
+                      width="{{ event.bounding_box.2|subtract:event.bounding_box.0 }}"
+                      height="{{ event.bounding_box.3|subtract:event.bounding_box.1 }}"
+                      fill="none" stroke="#f87171" stroke-width="3" vector-effect="non-scaling-stroke"/>
+              </svg>
+            {% endif %}
+          {% else %}
+            <div class="camera-placeholder">
+              <span aria-hidden="true" style="font-size:1.8rem">▣</span>
+              <span>No snapshot was stored for this event</span>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <h2 style="font-size:1.05rem">What happened</h2>
+      <p>{{ event.description|default:"No further detail was recorded."|linebreaksbr }}</p>
+      {% if event.metadata %}
+      <details style="margin-top:var(--sp-4)">
+        <summary class="small semibold" style="cursor:pointer">Detection details</summary>
+        <dl class="kv" style="margin-top:var(--sp-3)">
+          {% for key, value in event.metadata.items %}
+            <dt class="mono tiny">{{ key }}</dt><dd class="mono tiny">{{ value }}</dd>
+          {% endfor %}
+        </dl>
+      </details>
+      {% endif %}
+    </div>
+
+    {% if related %}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Around the same time</h2></div>
+      <div class="card-body">
+        <div class="feed">
+          {% for item in related %}
+          <div class="feed-item">
+            <span class="feed-marker" style="background:var(--text-3)"></span>
+            <div class="feed-body">
+              <div class="feed-title" style="font-size:.87rem"><a href="{{ item.get_absolute_url }}">{{ item.title }}</a></div>
+              <div class="feed-meta tiny">{{ item.occurred_at|date:"H:i:s" }} · {{ item.analytic_label }}</div>
+            </div>
+            {{ item.severity|severity_badge }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="stack">
+    <div class="card card-pad">
+      <div class="upper">Details</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        <dt>Camera</dt><dd>{% if event.camera %}<a href="{{ event.camera.get_absolute_url }}">{{ event.camera.name }}</a>{% else %}—{% endif %}</dd>
+        <dt>Site</dt><dd>{{ event.camera.site.name|default:"—" }}</dd>
+        <dt>Zone</dt><dd>{{ event.zone.name|default:"—" }}</dd>
+        <dt>Person</dt><dd>{% if event.employee %}<a href="{{ event.employee.get_absolute_url }}">{{ event.employee.full_name }}</a>{% else %}Not identified{% endif %}</dd>
+        <dt>Confidence</dt><dd class="numeric">{{ event.confidence|pct }}</dd>
+        <dt>Track</dt><dd class="mono">{{ event.track_id|default:"—" }}</dd>
+        <dt>Occurrences</dt><dd class="numeric">{{ event.occurrence_count }}</dd>
+        <dt>Incident</dt><dd>{% if event.incident %}<a href="{{ event.incident.get_absolute_url }}">{{ event.incident.reference }}</a>{% else %}—{% endif %}</dd>
+        <dt>Reference</dt><dd class="mono tiny">{{ event.uid }}</dd>
+      </dl>
+    </div>
+
+    {% if event.acknowledged_at or event.resolved_at %}
+    <div class="card card-pad">
+      <div class="upper">Handling</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        {% if event.acknowledged_at %}
+          <dt>Acknowledged</dt><dd>{{ event.acknowledged_by|default:"—" }}<div class="tiny dim">{{ event.acknowledged_at|date:"j M, H:i" }}</div></dd>
+        {% endif %}
+        {% if event.resolved_at %}
+          <dt>Resolved</dt><dd>{{ event.resolved_by|default:"—" }}<div class="tiny dim">{{ event.resolved_at|date:"j M, H:i" }}</div></dd>
+        {% endif %}
+        {% if event.response_seconds %}<dt>Response time</dt><dd>{{ event.response_seconds|duration }}</dd>{% endif %}
+      </dl>
+      {% if event.resolution_note %}<p class="small muted" style="margin-top:var(--sp-3)">“{{ event.resolution_note }}”</p>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if event.is_actionable and 'events.resolve' in user_permissions %}
+    <div class="card card-pad">
+      <div class="upper">Add a note</div>
+      <form method="post" action="{% url 'dashboard:event_action' event.uid 'resolve' %}" style="margin-top:var(--sp-3)">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <textarea name="note" class="input" rows="3" placeholder="What did you find? What was done?"></textarea>
+        <button class="btn btn-primary btn-block" style="margin-top:var(--sp-3)">Resolve with note</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

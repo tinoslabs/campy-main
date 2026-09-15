@@ -1,0 +1,63 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Enrol {{ employee.full_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:employees' %}">Employees</a> <span>/</span>
+    <a href="{{ employee.get_absolute_url }}">{{ employee.full_name }}</a> <span>/</span> <span>Enrol</span></div>
+  <h1>Enrol {{ employee.full_name }}</h1>
+  <p class="subtitle">Upload three to eight clear, front-facing photographs taken in different lighting.</p>
+</div>
+
+{% if not has_model %}
+<div class="alert alert-warning">
+  <span aria-hidden="true">!</span>
+  <div>
+    <strong>No trained CampyFace model is deployed.</strong>
+    Enrolment will fall back to a texture signature, which is far less reliable for telling people
+    apart. Train and deploy a CampyFace model first for production use.
+    {% if 'training.run' in user_permissions %}<a href="{% url 'dashboard:training_jobs' %}">Go to training →</a>{% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="grid grid-2" style="align-items:start">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.05rem">Upload photographs</h2></div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="field">
+          <label for="photos">Photographs</label>
+          <input type="file" id="photos" name="photos" accept="image/*" multiple required class="input">
+          <div class="help">JPEG or PNG. The face should fill a good part of the frame and be evenly lit.</div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Compute face signature</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card card-pad">
+      <div class="upper">How enrolment works</div>
+      <ol class="small muted" style="margin:var(--sp-3) 0 0;padding-left:18px;line-height:1.8">
+        <li>Each photo is scanned for a face using skin-chroma and shape analysis.</li>
+        <li>The face crop passes through <strong>CampyFace</strong>, our own embedding network.</li>
+        <li>The resulting vectors are averaged into one unit-length signature.</li>
+        <li>Recognition then compares live faces to that signature by cosine similarity.</li>
+      </ol>
+      <p class="small muted" style="margin-top:var(--sp-4)">
+        Because this is an embedding rather than a classifier, adding a person never requires
+        retraining — and the photographs themselves are not kept.
+      </p>
+    </div>
+    <div class="card card-pad" style="border-color:var(--warn)">
+      <div class="upper" style="color:var(--warn)">Your obligations</div>
+      <p class="small muted" style="margin:var(--sp-3) 0 0">
+        You confirmed {{ employee.full_name }} gave written consent on
+        {{ employee.consent_recorded_at|date:"j F Y"|default:"file" }}. Keep that record: if
+        consent is withdrawn, erase the biometric data from their profile immediately.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

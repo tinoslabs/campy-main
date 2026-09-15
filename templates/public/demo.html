@@ -1,0 +1,30 @@
+{% extends "public/base.html" %}
+{% block title %}Book a demo — {{ BRAND.name }}{% endblock %}
+{% block public_content %}
+<section class="section">
+  <div class="container">
+    <div class="grid grid-2" style="gap:var(--sp-7);align-items:start">
+      <div>
+        <span class="hero-eyebrow">Live demo</span>
+        <h1>See it running on real footage</h1>
+        <p class="lead">A 30-minute call. We will run Campy AI against a scene like yours and show you exactly what it flags and what it ignores.</p>
+        <ul class="price-features" style="margin-top:var(--sp-5)">
+          <li>Walk through all seven detectors on live video</li>
+          <li>Draw a geofence on your own camera layout</li>
+          <li>See a model trained and deployed end to end</li>
+          <li>Straight answers on privacy, retention and consent</li>
+        </ul>
+      </div>
+      <div class="card card-pad">
+        <h2 style="font-size:1.15rem">Request a demo</h2>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="source" value="demo">
+          {% include "partials/form.html" %}
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Request demo</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

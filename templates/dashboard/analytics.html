@@ -1,0 +1,158 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Analytics{% endblock %}
+{% block topbar_actions %}
+<div class="btn-group">
+  <a href="?days=7" class="btn btn-sm {% if days == 7 %}btn-primary{% endif %}">7d</a>
+  <a href="?days=30" class="btn btn-sm {% if days == 30 %}btn-primary{% endif %}">30d</a>
+  <a href="?days=90" class="btn btn-sm {% if days == 90 %}btn-primary{% endif %}">90d</a>
+</div>
+{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Analytics</h1><p class="subtitle">{{ totals|intcomma }} events over the last {{ days }} days</p></div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-5)">
+  <div class="stat"><div class="stat-label">Total events</div><div class="stat-value">{{ totals|intcomma }}</div>
+    <div class="stat-meta">{{ by_severity.critical|default:0 }} critical · {{ by_severity.high|default:0 }} high</div></div>
+  <div class="stat"><div class="stat-label">Resolution rate</div><div class="stat-value">{{ resolution_rate }}%</div>
+    <div class="meter" style="margin-top:6px"><div class="meter-fill ok" style="width:{{ resolution_rate }}%"></div></div></div>
+  <div class="stat"><div class="stat-label">False-alarm rate</div>
+    <div class="stat-value" style="color:{% if false_positive_rate > 25 %}var(--bad){% else %}var(--ok){% endif %}">{{ false_positive_rate }}%</div>
+    <div class="stat-meta">lower is better</div></div>
+  <div class="stat"><div class="stat-label">Median response</div><div class="stat-value">{{ median_response|duration }}</div>
+    <div class="stat-meta">time to acknowledge</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Daily volume</h2>
+        <div class="chart-legend"><span><span class="chart-swatch" style="background:var(--accent)"></span>All events</span></div></div>
+      <div class="card-body">
+        <div style="display:flex;align-items:flex-end;gap:2px;height:150px">
+          {% for row in by_day %}
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%" title="{{ row.date }} — {{ row.total }} events, {{ row.critical }} critical">
+            {% if row.critical %}
+              <div style="background:var(--bad);border-radius:3px 3px 0 0;min-height:1px;height:{% progress_width row.critical day_max %}%"></div>
+            {% endif %}
+            <div style="background:var(--accent);{% if not row.critical %}border-radius:3px 3px 0 0;{% endif %}min-height:2px;height:{% progress_width row.total day_max %}%"></div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="row-between tiny dim" style="margin-top:6px">
+          <span>{{ by_day.0.date|date:"j M" }}</span><span>Today</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1rem">By hour of day</h2></div>
+        <div class="card-body">
+          <div style="display:flex;align-items:flex-end;gap:2px;height:104px">
+            {% for count in by_hour %}
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%" title="{{ forloop.counter0 }}:00 — {{ count }}">
+              <div style="background:var(--cyan-500);border-radius:2px 2px 0 0;min-height:2px;height:{% progress_width count hour_max %}%"></div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="row-between tiny dim" style="margin-top:6px"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1rem">By day of week</h2></div>
+        <div class="card-body">
+          <div style="display:flex;align-items:flex-end;gap:8px;height:104px">
+            {% for count in by_weekday %}
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%">
+              <div style="background:var(--indigo-500);border-radius:3px 3px 0 0;min-height:2px;height:{% progress_width count weekday_max %}%"></div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="row" style="margin-top:6px">
+            {% for name in weekday_names %}<span class="tiny dim center" style="flex:1">{{ name }}</span>{% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Busiest cameras</h2></div>
+      <div class="card-body">
+        {% for row in by_camera %}
+        <div style="margin-bottom:var(--sp-3)">
+          <div class="row-between small">
+            <span>{{ row.camera__name|default:"—" }} <span class="dim tiny">{{ row.camera__site__name }}</span></span>
+            <span class="semibold numeric">{{ row.total }}</span>
+          </div>
+          <div class="meter" style="margin-top:4px"><div class="meter-fill" style="width:{% progress_width row.total camera_max %}%"></div></div>
+        </div>
+        {% empty %}<p class="small muted center" style="margin:0">No camera activity in this period.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">By analytic</h2></div>
+      <div class="card-body">
+        {% for row in by_analytic %}
+        <div style="margin-bottom:var(--sp-3)">
+          <div class="row-between small">
+            <span>{{ row.label }}</span>
+            <span class="row row-tight">
+              <span class="semibold numeric">{{ row.total }}</span>
+              {% if can_export %}
+                <a href="{% url 'dashboard:analysis_report' %}?analytics={{ row.analytic }}&amp;days={{ days }}"
+                   class="tiny" title="Download a {{ row.label }} report with evidence">PDF</a>
+              {% endif %}
+            </span>
+          </div>
+          <div class="meter" style="margin-top:4px"><div class="meter-fill" style="width:{% progress_width row.total analytic_max %}%"></div></div>
+        </div>
+        {% empty %}<p class="small muted center" style="margin:0">No events yet.</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Severity mix</h2></div>
+      <div class="card-body">
+        <dl class="kv">
+          <dt>Critical</dt><dd class="numeric">{{ by_severity.critical|default:0 }}</dd>
+          <dt>High</dt><dd class="numeric">{{ by_severity.high|default:0 }}</dd>
+          <dt>Medium</dt><dd class="numeric">{{ by_severity.medium|default:0 }}</dd>
+          <dt>Low</dt><dd class="numeric">{{ by_severity.low|default:0 }}</dd>
+          <dt>Info</dt><dd class="numeric">{{ by_severity.info|default:0 }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    {% if top_employees %}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Most observed people</h2></div>
+      <div class="card-body">
+        <div class="stack-sm">
+          {% for row in top_employees %}
+          <div class="row-between"><span class="small">{{ row.employee__full_name }}</span><span class="semibold numeric small">{{ row.total }}</span></div>
+          {% endfor %}
+        </div>
+        <p class="tiny dim" style="margin-top:var(--sp-3)">Observation counts reflect camera coverage as much as behaviour — a person on a busy corridor camera will always rank high.</p>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if can_export %}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Download this period</h2></div>
+      <div class="card-body stack" style="gap:var(--sp-2)">
+        <a href="{% url 'dashboard:analysis_report' %}?days={{ days }}"
+           class="btn btn-primary btn-block">⤓ Analysis report (PDF)</a>
+        <p class="tiny dim" style="margin:0">Every feature, with the frames that produced each
+          finding — the detection outlined and the zone it crossed drawn on top.</p>
+        <a href="{% url 'dashboard:events_export' %}?days={{ days }}" class="btn btn-block">⤓ Raw events (CSV)</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+<section class="section">
+  <div class="container">
+    {% if block.heading %}<div class="section-head"><h2>{{ block.heading }}</h2></div>{% endif %}
+    <div class="grid grid-3">
+      {% for item in block.items %}
+      <figure style="margin:0">
+        <img src="{{ item.url }}" alt="{{ item.alt|default:'' }}" style="border-radius:var(--radius);width:100%">
+        {% if item.caption %}<figcaption class="tiny dim center" style="margin-top:6px">{{ item.caption }}</figcaption>{% endif %}
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>

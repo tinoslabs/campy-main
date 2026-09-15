@@ -1,0 +1,12 @@
+<section class="section">
+  <div class="container">
+    <div class="card card-pad center" style="background:linear-gradient(140deg,var(--indigo-600),var(--cyan-600));border:0;padding:var(--sp-7) var(--sp-5)">
+      <h2 style="color:#fff">{{ block.heading }}</h2>
+      {% if block.body %}<p style="color:rgba(255,255,255,.9);max-width:540px;margin:0 auto var(--sp-5)">{{ block.body }}</p>{% endif %}
+      <div class="row" style="justify-content:center">
+        {% if block.primary_label %}<a href="{{ block.primary_url|default:'#' }}" class="btn btn-lg" style="background:#fff;color:var(--indigo-700);border-color:#fff">{{ block.primary_label }}</a>{% endif %}
+        {% if block.secondary_label %}<a href="{{ block.secondary_url|default:'#' }}" class="btn btn-lg" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.6)">{{ block.secondary_label }}</a>{% endif %}
+      </div>
+    </div>
+  </div>
+</section>

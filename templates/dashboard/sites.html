@@ -1,0 +1,38 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Sites{% endblock %}
+{% block topbar_actions %}{% if 'cameras.manage' in user_permissions %}<a href="{% url 'dashboard:site_create' %}" class="btn btn-sm btn-primary">＋ Add site</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Sites</h1><p class="subtitle">Physical locations — a floor, branch, campus or warehouse.</p></div>
+<div class="grid grid-auto-lg">
+  {% for site in sites %}
+  <div class="card card-pad card-hover">
+    <div class="row-between">
+      <div>
+        <h3 style="margin:0;font-size:1.05rem"><a href="{{ site.get_absolute_url }}">{{ site.name }}</a></h3>
+        {% if site.code %}<span class="mono tiny dim">{{ site.code }}</span>{% endif %}
+      </div>
+      {% if site.is_active %}<span class="pill pill-ok">Active</span>{% else %}<span class="pill pill-muted">Inactive</span>{% endif %}
+    </div>
+    {% if site.address %}<p class="small muted" style="margin-top:var(--sp-2)">{{ site.address }}{% if site.city %}, {{ site.city }}{% endif %}</p>{% endif %}
+    <div class="row-between" style="margin-top:var(--sp-4)">
+      <div class="small"><strong class="numeric">{{ site.cameras_count }}</strong> camera{{ site.cameras_count|pluralize }}</div>
+      <div class="small">
+        <span class="dot" style="color:{% if site.online_count == site.cameras_count and site.cameras_count %}var(--ok){% else %}var(--warn){% endif %}"></span>
+        {{ site.online_count }} online
+      </div>
+    </div>
+    <div class="row" style="margin-top:var(--sp-4)">
+      <a href="{{ site.get_absolute_url }}" class="btn btn-sm">Open</a>
+      {% if 'cameras.manage' in user_permissions %}<a href="{% url 'dashboard:site_edit' site.uid %}" class="btn btn-sm btn-ghost">Edit</a>{% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty card" style="grid-column:1/-1">
+    <div class="empty-icon" aria-hidden="true">⌂</div>
+    <h3>No sites yet</h3>
+    <p>A site groups the cameras at one physical location. Add your first one to get started.</p>
+    {% if 'cameras.manage' in user_permissions %}<a href="{% url 'dashboard:site_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Add a site</a>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

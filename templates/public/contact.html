@@ -1,0 +1,55 @@
+{% extends "public/base.html" %}
+{% block title %}Contact — {{ BRAND.name }}{% endblock %}
+{% block public_content %}
+<section class="section">
+  <div class="container">
+    <div class="grid grid-2" style="gap:var(--sp-7);align-items:start">
+      <div>
+        <span class="hero-eyebrow">Get in touch</span>
+        <h1>Tell us what you want to watch</h1>
+        <p class="lead">
+          Send us your camera count and what you are trying to prevent, and we will tell you
+          honestly whether Campy AI is a good fit — and how to set it up if it is.
+        </p>
+        <div class="stack" style="margin-top:var(--sp-6)">
+          <div class="row">
+            <span class="feature-icon" style="width:38px;height:38px;font-size:1rem" aria-hidden="true">✉</span>
+            <div>
+              <div class="semibold small">Email</div>
+              <a href="mailto:{{ site_settings.contact_email|default:BRAND.support_email }}" class="small">{{ site_settings.contact_email|default:BRAND.support_email }}</a>
+            </div>
+          </div>
+          {% if site_settings.sales_phone %}
+          <div class="row">
+            <span class="feature-icon" style="width:38px;height:38px;font-size:1rem" aria-hidden="true">☎</span>
+            <div>
+              <div class="semibold small">Phone</div>
+              <a href="tel:{{ site_settings.sales_phone }}" class="small">{{ site_settings.sales_phone }}</a>
+            </div>
+          </div>
+          {% endif %}
+          <div class="row">
+            <span class="feature-icon" style="width:38px;height:38px;font-size:1rem" aria-hidden="true">⚡</span>
+            <div>
+              <div class="semibold small">Prefer to just try it?</div>
+              <a href="{% url 'accounts:signup' %}" class="small">Start a free trial — no call required</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <h2 style="font-size:1.15rem">Send us a message</h2>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% include "partials/form.html" %}
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Send enquiry</button>
+          <p class="tiny dim center" style="margin:var(--sp-3) 0 0">
+            We reply within one working day and never share your details.
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

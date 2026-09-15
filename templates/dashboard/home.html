@@ -1,0 +1,227 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Overview{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'dashboard:live' %}" class="btn btn-sm btn-primary">◉ Live wall</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-head row-between">
+  <div>
+    <h1>Good to see you, {{ user.get_short_name }}</h1>
+    <p class="subtitle">{{ current_organization.name }} · {{ stats.cameras_online }} of {{ stats.cameras_total }} cameras online</p>
+  </div>
+  <div class="row">
+    {% if 'events.export' in user_permissions %}
+      <a href="{% url 'dashboard:events_export' %}?days=7" class="btn btn-sm">Export week</a>
+    {% endif %}
+    <a href="{% url 'dashboard:analytics' %}" class="btn btn-sm">Full analytics →</a>
+  </div>
+</div>
+
+{# ---------------- Headline stats ---------------- #}
+<div class="grid grid-4" style="margin-bottom:var(--sp-5)">
+  <div class="stat">
+    <div class="stat-label">Events · 24h</div>
+    <div class="stat-value">{{ stats.events_24h|intcomma }}</div>
+    <div class="stat-meta">
+      {% with change=stats.events_7d|delta:stats.events_prev_7d %}
+        {% if change > 0 %}<span class="trend-up">▲ {{ change|floatformat:0 }}%</span>
+        {% elif change < 0 %}<span class="trend-down">▼ {{ change|floatformat:0 }}%</span>
+        {% else %}<span class="trend-flat">no change</span>{% endif %}
+        <span class="dim">vs previous week</span>
+      {% endwith %}
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Needs attention</div>
+    <div class="stat-value" style="color:{% if stats.critical_open %}var(--bad){% else %}var(--ok){% endif %}">{{ stats.critical_open }}</div>
+    <div class="stat-meta">{{ stats.incidents_open }} open incident{{ stats.incidents_open|pluralize }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Camera health</div>
+    <div class="stat-value">{{ stats.camera_health }}%</div>
+    <div class="meter" style="margin-top:6px">
+      <div class="meter-fill {% if stats.camera_health > 90 %}ok{% elif stats.camera_health > 60 %}warn{% else %}bad{% endif %}" style="width:{{ stats.camera_health }}%"></div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Median response</div>
+    <div class="stat-value">{{ stats.median_response|duration }}</div>
+    <div class="stat-meta">{{ stats.false_positive_rate }}% marked false alarm</div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="stack">
+    {# ---------------- 7-day trend ---------------- #}
+    <div class="card">
+      <div class="card-head">
+        <h2 style="font-size:1.05rem">Event volume · last 7 days</h2>
+        <span class="small muted">{{ stats.events_7d|intcomma }} total</span>
+      </div>
+      <div class="card-body">
+        <svg viewBox="0 0 240 60" preserveAspectRatio="none" class="chart" style="height:120px" role="img" aria-label="Daily event volume for the last seven days">
+          <g class="chart-grid">
+            <line x1="0" y1="15" x2="240" y2="15"/><line x1="0" y1="30" x2="240" y2="30"/><line x1="0" y1="45" x2="240" y2="45"/>
+          </g>
+          {% if daily_points %}
+            <polyline class="chart-line" points="{{ daily_points }}" vector-effect="non-scaling-stroke"/>
+          {% endif %}
+        </svg>
+        <div class="row-between" style="margin-top:var(--sp-2)">
+          {% for count in daily_counts %}
+            <div class="center" style="flex:1">
+              <div class="tiny semibold numeric">{{ count }}</div>
+              <div class="tiny dim">{% if forloop.last %}Today{% else %}−{{ daily_counts|length|subtract:forloop.counter }}d{% endif %}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ---------------- Hourly ---------------- #}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">When things happen · last 24 hours</h2></div>
+      <div class="card-body">
+        <div style="display:flex;align-items:flex-end;gap:2px;height:96px">
+          {% for count in hourly %}
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%"
+                 title="{{ forloop.counter0 }}:00 — {{ count }} event{{ count|pluralize }}">
+              <div style="background:var(--accent);border-radius:3px 3px 0 0;min-height:2px;height:{% progress_width count hourly_max %}%"></div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="row-between tiny dim" style="margin-top:6px">
+          <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
+        </div>
+      </div>
+    </div>
+
+    {# ---------------- Recent events ---------------- #}
+    <div class="card">
+      <div class="card-head">
+        <h2 style="font-size:1.05rem">Latest events</h2>
+        <a href="{% url 'dashboard:events' %}" class="small">View all →</a>
+      </div>
+      <div class="card-body">
+        <div class="feed">
+          {% for event in recent_events %}
+          <div class="feed-item">
+            <span class="feed-marker" style="background:{% if event.severity == 'critical' %}var(--crit){% elif event.severity == 'high' %}var(--bad){% elif event.severity == 'medium' %}var(--warn){% else %}var(--info){% endif %}"></span>
+            <div class="feed-body">
+              <div class="feed-title"><a href="{{ event.get_absolute_url }}">{{ event.title }}</a></div>
+              <div class="feed-meta">
+                {{ event.severity|severity_badge }}
+                <span>{{ event.camera.name|default:"—" }}</span>
+                {% if event.zone %}<span>· {{ event.zone.name }}</span>{% endif %}
+                <span>· {{ event.occurred_at|ago }}</span>
+                {% if event.occurrence_count > 1 %}<span class="pill pill-muted">×{{ event.occurrence_count }}</span>{% endif %}
+              </div>
+            </div>
+            {{ event.status|status_pill }}
+          </div>
+          {% empty %}
+          <div class="empty">
+            <div class="empty-icon" aria-hidden="true">✓</div>
+            <h3>Nothing to report</h3>
+            <p>No events have been recorded yet. Connect a camera and enable an analytic to get started.</p>
+            {% if 'cameras.manage' in user_permissions %}
+              <a href="{% url 'dashboard:camera_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Connect a camera</a>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ---------------- Right rail ---------------- #}
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">By analytic · 7 days</h2></div>
+      <div class="card-body">
+        {% for row in by_analytic %}
+        <div style="margin-bottom:var(--sp-3)">
+          <div class="row-between small"><span>{{ row.label }}</span><span class="semibold numeric">{{ row.total }}</span></div>
+          <div class="meter" style="margin-top:4px">
+            <div class="meter-fill" style="width:{% progress_width row.total by_analytic.0.total %}%"></div>
+          </div>
+        </div>
+        {% empty %}<p class="small muted center" style="margin:0">No events in this period.</p>{% endfor %}
+      </div>
+    </div>
+
+    {% if open_incidents %}
+    <div class="card">
+      <div class="card-head">
+        <h2 style="font-size:1.02rem">Open incidents</h2>
+        <a href="{% url 'dashboard:incidents' %}" class="small">All →</a>
+      </div>
+      <div class="card-body">
+        <div class="stack-sm">
+          {% for incident in open_incidents %}
+          <a href="{{ incident.get_absolute_url }}" class="panel" style="display:block;text-decoration:none">
+            <div class="row-between">
+              <span class="mono tiny dim">{{ incident.reference }}</span>
+              {{ incident.severity|severity_badge }}
+            </div>
+            <div class="small semibold" style="margin-top:3px">{{ incident.title|truncatechars:52 }}</div>
+            <div class="tiny dim">{{ incident.event_count }} event{{ incident.event_count|pluralize }} · {{ incident.started_at|ago }}</div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if problem_cameras %}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Cameras needing attention</h2></div>
+      <div class="card-body">
+        <div class="stack-sm">
+          {% for camera in problem_cameras %}
+          <div class="row-between">
+            <div>
+              <a href="{{ camera.get_absolute_url }}" class="small semibold">{{ camera.name }}</a>
+              <div class="tiny dim">{{ camera.site.name }} · {{ camera.uptime_label }}</div>
+            </div>
+            {{ camera.status|status_pill }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">AI models in use</h2></div>
+      <div class="card-body">
+        <div class="stack-sm">
+          {% for row in model_status %}
+          <div class="row-between">
+            <span class="small">{{ row.label }}</span>
+            {% if row.loaded %}<span class="pill pill-ok">{{ row.params|intcomma }} params</span>
+            {% else %}<span class="pill pill-muted">classical</span>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% if 'training.view' in user_permissions %}
+          <a href="{% url 'dashboard:models' %}" class="btn btn-sm btn-outline btn-block" style="margin-top:var(--sp-4)">Manage models</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="upper">Workspace</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        <dt>Sites</dt><dd class="numeric">{{ stats.sites }}</dd>
+        <dt>Cameras</dt><dd class="numeric">{{ stats.cameras_total }}</dd>
+        <dt>Employees</dt><dd class="numeric">{{ stats.employees }}</dd>
+        <dt>Enrolled faces</dt><dd class="numeric">{{ stats.enrolled }}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+{% endblock %}

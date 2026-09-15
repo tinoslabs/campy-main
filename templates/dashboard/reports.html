@@ -1,0 +1,32 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Reports{% endblock %}
+{% block topbar_actions %}{% if 'analytics.schedule' in user_permissions %}<a href="{% url 'dashboard:report_create' %}" class="btn btn-sm btn-primary">＋ New report</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Reports</h1><p class="subtitle">Saved views you can run on demand or have emailed on a schedule.</p></div>
+<div class="grid grid-auto-lg">
+  {% for report in reports %}
+  <div class="card card-pad card-hover">
+    <div class="row-between">
+      <h3 style="margin:0;font-size:1.02rem"><a href="{{ report.get_absolute_url }}">{{ report.name }}</a></h3>
+      {% if report.is_scheduled %}<span class="pill pill-ok">{{ report.get_frequency_display }}</span>
+      {% else %}<span class="pill pill-muted">On demand</span>{% endif %}
+    </div>
+    <p class="small muted" style="margin-top:var(--sp-2)">{{ report.get_kind_display }} · last {{ report.date_range_days }} days</p>
+    <dl class="kv small" style="margin-top:var(--sp-3)">
+      <dt>Last run</dt><dd>{{ report.last_run_at|ago }}</dd>
+      <dt>Recipients</dt><dd>{{ report.recipients|length }}</dd>
+    </dl>
+    <div class="row" style="margin-top:var(--sp-4)">
+      <a href="{{ report.get_absolute_url }}" class="btn btn-sm">Run now</a>
+      {% if 'analytics.schedule' in user_permissions %}<a href="{% url 'dashboard:report_edit' report.uid %}" class="btn btn-sm btn-ghost">Edit</a>{% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty card" style="grid-column:1/-1">
+    <div class="empty-icon" aria-hidden="true">▦</div><h3>No reports yet</h3>
+    <p>Build a safety summary, activity report, incident log or compliance export — once, or on a schedule.</p>
+    {% if 'analytics.schedule' in user_permissions %}<a href="{% url 'dashboard:report_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Create a report</a>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

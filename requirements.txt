@@ -1,0 +1,35 @@
+# ---- Core ----
+# 5.2 is verified by the test-suite; 6.0 changes URLField's default scheme.
+Django>=5.1.4,<6.0
+djangorestframework==3.15.2
+django-filter==24.3
+djangorestframework-simplejwt==5.3.1
+drf-spectacular==0.27.2
+django-cors-headers==4.6.0
+
+# ---- AI / numerics (our own models are built on top of these primitives) ----
+numpy==2.1.3
+Pillow==11.0.0
+
+# ---- Video decoding ----
+# Required, not optional: every camera that is not the built-in simulator —
+# RTSP, ONVIF, MJPEG, HLS, a file — is decoded through this. It is used ONLY to
+# turn a stream into frames; no analysis touches it.
+opencv-python-headless==4.10.0.84
+
+# ---- Reporting ----
+# Pure-Python wheel: an analysis report has to generate on the customer's own
+# server, Windows included, without anyone installing system libraries.
+reportlab==4.2.5
+
+# ---- Payments ----
+razorpay==1.4.2
+stripe==11.4.0
+
+# ---- Infra ----
+python-dotenv==1.0.1
+whitenoise==6.8.2
+requests==2.32.3
+qrcode==8.0
+
+# ---- Optional / production (install with: pip install -r requirements-prod.txt) ----

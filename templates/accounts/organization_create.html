@@ -1,0 +1,15 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}New workspace · {{ BRAND.name }}{% endblock %}
+{% block side_title %}A workspace per organisation{% endblock %}
+{% block side_body %}Each workspace has its own sites, cameras, team, roles, models and billing — kept completely separate from every other.{% endblock %}
+{% block auth_content %}
+<div class="card card-pad">
+  <h1 style="font-size:1.4rem">Create a workspace</h1>
+  <form method="post" novalidate style="margin-top:var(--sp-4)">
+    {% csrf_token %}
+    {% include "partials/form.html" %}
+    <button type="submit" class="btn btn-primary btn-block btn-lg">Create workspace</button>
+  </form>
+  <p class="center small" style="margin-top:var(--sp-4)"><a href="{% url 'dashboard:home' %}">Back to dashboard</a></p>
+</div>
+{% endblock %}

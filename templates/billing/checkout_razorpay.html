@@ -1,0 +1,41 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Complete payment{% endblock %}
+{% block content %}
+<div class="page-head center"><h1>Complete your payment</h1>
+  <p class="subtitle">Invoice {{ invoice.number }} · {{ invoice.currency_symbol }}{{ invoice.total|floatformat:2 }}</p></div>
+
+<div class="card card-pad center" style="max-width:480px;margin-inline:auto">
+  <div class="feature-icon" style="margin:0 auto var(--sp-4);width:56px;height:56px;font-size:1.5rem" aria-hidden="true">₹</div>
+  <h2 style="font-size:1.15rem">{{ package.name }}</h2>
+  <p class="muted small">The Razorpay payment window should open automatically.</p>
+  <button id="pay-now" class="btn btn-primary btn-lg btn-block" style="margin-top:var(--sp-4)">Open payment window</button>
+  <a href="{% url 'billing:packages' %}" class="btn btn-ghost btn-block" style="margin-top:var(--sp-2)">Cancel</a>
+  <p class="tiny dim" style="margin-top:var(--sp-4)">
+    Payment is verified on our server against Razorpay's signature before anything is activated.
+  </p>
+</div>
+
+<form id="confirm-form" method="post" action="{% url 'billing:razorpay_confirm' payment.uid %}" hidden>
+  {% csrf_token %}
+  <input type="hidden" name="razorpay_order_id" id="rzp-order">
+  <input type="hidden" name="razorpay_payment_id" id="rzp-payment">
+  <input type="hidden" name="razorpay_signature" id="rzp-signature">
+</form>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+(function(){
+  var options = {{ options|safe }};
+  options.handler = function(response){
+    document.getElementById('rzp-order').value = response.razorpay_order_id;
+    document.getElementById('rzp-payment').value = response.razorpay_payment_id;
+    document.getElementById('rzp-signature').value = response.razorpay_signature;
+    document.getElementById('confirm-form').submit();
+  };
+  options.modal = { ondismiss: function(){ /* leave the invoice open so it can be retried */ } };
+  var checkout = new Razorpay(options);
+  document.getElementById('pay-now').addEventListener('click', function(){ checkout.open(); });
+  setTimeout(function(){ checkout.open(); }, 400);
+})();
+</script>
+{% endblock %}

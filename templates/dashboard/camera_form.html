@@ -1,0 +1,143 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if camera %}Edit camera{% else %}Add camera{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:cameras' %}">Cameras</a> <span>/</span> <span>{% if camera %}{{ camera.name }}{% else %}New{% endif %}</span></div>
+  <h1>{% if camera %}Edit {{ camera.name }}{% else %}Connect a camera{% endif %}</h1>
+  <p class="subtitle">Campy AI works with the cameras you already own — RTSP, ONVIF, HTTP/MJPEG or HLS.</p>
+</div>
+
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+
+  <div class="grid" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">Identity</h2></div>
+        <div class="card-body">
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.site %}
+            {% include "partials/form_field.html" with field=form.name %}
+            <div class="full">{% include "partials/form_field.html" with field=form.location_note %}</div>
+            <div class="full">{% include "partials/form_field.html" with field=form.description %}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2 style="font-size:1.02rem">Connection</h2>
+          <span class="tiny dim">Credentials are stored separately and never shown again</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.protocol %}
+            {% include "partials/form_field.html" with field=form.demo_scenario %}
+            <div class="full">{% include "partials/form_field.html" with field=form.stream_url %}</div>
+            {% include "partials/form_field.html" with field=form.username %}
+            {% include "partials/form_field.html" with field=form.password %}
+            {% include "partials/form_field.html" with field=form.onvif_host %}
+            {% include "partials/form_field.html" with field=form.onvif_port %}
+          </div>
+          <div class="panel">
+            <div class="upper">Common stream URLs</div>
+            <div class="stack-sm small mono tiny" style="margin-top:var(--sp-2);color:var(--text-2)">
+              <div>rtsp://user:pass@192.168.1.50:554/Streaming/Channels/101 <span class="dim">— Hikvision</span></div>
+              <div>rtsp://user:pass@192.168.1.50:554/cam/realmonitor?channel=1&amp;subtype=0 <span class="dim">— Dahua</span></div>
+              <div>rtsp://192.168.1.50:554/live/ch0 <span class="dim">— generic ONVIF</span></div>
+              <div>http://192.168.1.50/video.mjpg <span class="dim">— MJPEG</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">Analytics</h2>
+          <span class="tiny dim">Turn on only what this camera needs</span></div>
+        <div class="card-body">
+          {% if form.enabled_analytics.errors %}<div class="alert alert-error">{{ form.enabled_analytics.errors }}</div>{% endif %}
+          <div class="grid grid-2">
+            {% for choice in form.enabled_analytics %}
+            <label class="check panel" style="align-items:center">
+              {{ choice.tag }}
+              <span>
+                <span class="semibold">{{ choice.choice_label }}</span>
+                {% if choice.data.value in blocked %}
+                  <span class="pill pill-warn tiny">Not in your plan</span>
+                {% endif %}
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+          {% if blocked %}
+            <p class="small muted" style="margin-top:var(--sp-3)">
+              Some analytics are not included in your current package.
+              <a href="{% url 'billing:packages' %}">Compare plans →</a>
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">Video &amp; performance</h2></div>
+        <div class="card-body">
+          {% include "partials/form_field.html" with field=form.target_fps %}
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.resolution_width %}
+            {% include "partials/form_field.html" with field=form.resolution_height %}
+            {% include "partials/form_field.html" with field=form.source_fps %}
+            {% include "partials/form_field.html" with field=form.rotation %}
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">Evidence &amp; privacy</h2></div>
+        <div class="card-body">
+          {% include "partials/form_field.html" with field=form.record_evidence %}
+          {% include "partials/form_field.html" with field=form.evidence_seconds %}
+          {% include "partials/form_field.html" with field=form.privacy_blur_faces %}
+          {% include "partials/form_field.html" with field=form.is_active %}
+          {% include "partials/form_field.html" with field=form.thumbnail %}
+          <p class="tiny dim" style="margin:0">
+            Pixelating unenrolled faces in stored snapshots is often what makes deployment lawful
+            in a shared or public-facing space.
+          </p>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <button type="submit" class="btn btn-primary btn-block btn-lg">Save camera</button>
+        <a href="{% url 'dashboard:cameras' %}" class="btn btn-ghost btn-block" style="margin-top:var(--sp-2)">Cancel</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+/* Show only the connection fields the selected protocol actually uses. */
+(function(){
+  var protocol = document.getElementById('id_protocol');
+  if (!protocol) return;
+  function field(name){
+    var el = document.getElementById('id_' + name);
+    return el ? el.closest('.field') : null;
+  }
+  function sync(){
+    var value = protocol.value;
+    var demo = value === 'demo';
+    var onvif = value === 'onvif';
+    [['demo_scenario', demo], ['stream_url', !demo], ['username', !demo],
+     ['password', !demo], ['onvif_host', onvif], ['onvif_port', onvif]
+    ].forEach(function(pair){
+      var el = field(pair[0]);
+      if (el) el.hidden = !pair[1];
+    });
+  }
+  protocol.addEventListener('change', sync); sync();
+})();
+</script>
+{% endblock %}

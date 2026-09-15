@@ -1,0 +1,13 @@
+<section class="section {% if block.background == 'muted' %}section-muted{% endif %}">
+  <div class="container container-narrow">
+    {% if block.heading %}<div class="section-head"><h2>{{ block.heading }}</h2></div>{% endif %}
+    <div class="stack-sm">
+      {% for item in block.items %}
+      <details class="card card-pad">
+        <summary class="semibold" style="cursor:pointer">{{ item.question }}</summary>
+        <p class="muted small" style="margin:var(--sp-3) 0 0">{{ item.answer|linebreaksbr }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>

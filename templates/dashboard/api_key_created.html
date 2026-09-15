@@ -1,0 +1,27 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}API key created{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Your new API key</h1></div>
+<div class="card" style="max-width:720px;border-color:var(--warn)">
+  <div class="card-body">
+    <div class="alert alert-warning">
+      <span aria-hidden="true">!</span>
+      <div><strong>Copy this now — it will never be shown again.</strong>
+        Campy AI stores only a SHA-256 hash, so we cannot recover it for you.</div>
+    </div>
+    <label class="label">{{ api_key.name }}</label>
+    <div class="copy-field">
+      <input type="text" id="plaintext-key" value="{{ plaintext }}" readonly class="input">
+      <button class="btn btn-primary" data-copy="#plaintext-key">Copy</button>
+    </div>
+    <div class="code-block" style="margin-top:var(--sp-5)">curl {{ request.scheme }}://{{ request.get_host }}/api/v1/events/ \
+  -H "Authorization: Api-Key {{ plaintext }}"</div>
+    <dl class="kv" style="margin-top:var(--sp-5)">
+      <dt>Prefix</dt><dd class="mono">{{ api_key.prefix }}</dd>
+      <dt>Permissions</dt><dd>{{ api_key.scopes|length }}</dd>
+      <dt>Expires</dt><dd>{{ api_key.expires_at|date:"j F Y"|default:"Never" }}</dd>
+    </dl>
+    <a href="{% url 'dashboard:api_keys' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Done — I have copied it</a>
+  </div>
+</div>
+{% endblock %}

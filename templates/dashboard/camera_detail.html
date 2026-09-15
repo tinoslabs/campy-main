@@ -1,0 +1,247 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}{{ camera.name }}{% endblock %}
+{% block topbar_actions %}
+{% if 'cameras.manage' in user_permissions %}
+  <form method="post" action="{% url 'dashboard:camera_test' camera.uid %}">{% csrf_token %}
+    <button class="btn btn-sm">Test connection</button></form>
+{% endif %}
+{% if 'cameras.control' in user_permissions %}
+  <form method="post" action="{% url 'dashboard:camera_run' camera.uid %}">{% csrf_token %}
+    <input type="hidden" name="frames" value="90">
+    <button class="btn btn-sm btn-primary">▶ Run analysis</button></form>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs">
+    <a href="{% url 'dashboard:cameras' %}">Cameras</a> <span>/</span>
+    <a href="{{ camera.site.get_absolute_url }}">{{ camera.site.name }}</a> <span>/</span>
+    <span>{{ camera.name }}</span>
+  </div>
+  <div class="row-between">
+    <div>
+      <div class="row row-tight">{{ camera.status|status_pill }}
+        <span class="pill pill-muted">{{ camera.get_protocol_display }}</span>
+        <span class="small dim">{{ camera.uptime_label }}</span></div>
+      <h1 style="margin-top:var(--sp-2)">{{ camera.name }}</h1>
+      <p class="subtitle">{{ camera.location_note|default:camera.masked_url }}</p>
+    </div>
+    {% if 'cameras.manage' in user_permissions %}
+    <div class="row">
+      <a href="{% url 'dashboard:camera_edit' camera.uid %}" class="btn btn-sm">Edit</a>
+      {% if 'zones.manage' in user_permissions %}
+        <a href="{% url 'dashboard:zone_create' camera.uid %}" class="btn btn-sm">＋ Draw zone</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if camera.status_detail %}
+  <div class="alert alert-{% if camera.status == 'online' %}success{% else %}warning{% endif %}">
+    <span aria-hidden="true">i</span><span>{{ camera.status_detail }}</span>
+  </div>
+{% endif %}
+{% if camera.blocked_analytics %}
+  <div class="alert alert-warning">
+    <span aria-hidden="true">!</span>
+    <div><strong>{{ camera.blocked_analytics|length }} analytic(s) are enabled but not in your package</strong>
+      — they are not running. <a href="{% url 'billing:packages' %}">Compare plans →</a></div>
+  </div>
+{% endif %}
+
+<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Live view</h2>
+        {% if camera.is_healthy %}
+          <span class="row row-tight small muted"><span class="dot dot-live"></span>
+            {% if camera.observed_fps %}{{ camera.observed_fps|floatformat:1 }} fps analysed{% else %}Live{% endif %}</span>
+        {% else %}
+          <span class="row row-tight small muted" title="{{ camera.status_detail }}">
+            <span class="dot" style="background:var(--{% if camera.status == 'offline' %}bad{% else %}warn{% endif %})"></span>
+            {{ camera.get_status_display }} · {{ camera.target_fps|floatformat:1 }} fps when running</span>
+        {% endif %}</div>
+      <div class="card-body card-body-flush">
+        <div class="camera-view" style="border-radius:0">
+          {% comment %}
+            Only ask for a frame from a camera that could plausibly send one:
+            fetching from one known to be down makes the tile hang for the whole
+            connect timeout before the explanation below ever appears.
+          {% endcomment %}
+          {% if camera.is_demo or camera.status == 'online' or camera.status == 'degraded' %}
+          <img src="{% url 'dashboard:camera_stream' camera.uid %}" alt="Live view of {{ camera.name }}" id="camera-frame"
+               data-still="{% url 'dashboard:camera_preview' camera.uid %}"
+               onerror="this.style.display='none';document.getElementById('frame-fallback').style.display='flex'">
+          {% endif %}
+          <div class="camera-placeholder" id="frame-fallback"
+               style="{% if camera.is_demo or camera.status == 'online' or camera.status == 'degraded' %}display:none{% else %}display:flex{% endif %}">
+            <span aria-hidden="true" style="font-size:1.8rem">▣</span>
+            <span>No frame available</span>
+            {% if camera.connection_hint %}
+              <span class="small" style="max-width:46ch;text-align:center;opacity:.85">{{ camera.connection_hint }}</span>
+            {% else %}
+              <span class="small" style="opacity:.75">Use <strong>Test connection</strong> to see what the camera reports.</span>
+            {% endif %}
+          </div>
+          <svg class="camera-overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
+            {% for zone in zones %}
+              {% if zone.is_active and zone.polygon %}
+                <polygon class="zone-poly {{ zone.kind }}" points="{% for point in zone.polygon %}{{ point.0|mul:100|floatformat:2 }},{{ point.1|mul:100|floatformat:2 }} {% endfor %}"/>
+              {% endif %}
+            {% endfor %}
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Zones on this camera</h2>
+        {% if 'zones.manage' in user_permissions %}<a href="{% url 'dashboard:zone_create' camera.uid %}" class="btn btn-sm">＋ Draw zone</a>{% endif %}</div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Zone</th><th>Type</th><th>Severity</th><th>Schedule</th><th>Limit</th><th class="right">Actions</th></tr></thead>
+          <tbody>
+            {% for zone in zones %}
+            <tr>
+              <td><span class="dot" style="color:{{ zone.colour }}"></span> <span class="semibold">{{ zone.name }}</span>
+                <div class="tiny dim">{{ zone.point_count }} points · {{ zone.area_fraction|pct }} of view</div></td>
+              <td><span class="pill pill-muted">{{ zone.get_kind_display }}</span></td>
+              <td>{{ zone.severity|severity_badge }}</td>
+              <td class="small">{{ zone.schedule_label }}</td>
+              <td class="small numeric">{% if zone.max_occupancy %}max {{ zone.max_occupancy }}{% else %}—{% endif %}</td>
+              <td class="actions">
+                {% if 'zones.manage' in user_permissions %}
+                <a href="{% url 'dashboard:zone_edit' zone.uid %}" class="btn btn-sm btn-ghost">Edit</a>
+                <form method="post" action="{% url 'dashboard:zone_delete' zone.uid %}" style="display:inline" data-confirm="Delete zone '{{ zone.name }}'?">
+                  {% csrf_token %}<button class="btn btn-sm btn-ghost" style="color:var(--bad)">Delete</button></form>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="center muted" style="padding:var(--sp-6)">
+              No zones drawn. Zones power geofencing, occupancy limits and shelf monitoring.
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Recent events</h2>
+        <a href="{% url 'dashboard:events' %}?camera={{ camera.pk }}" class="small">All events →</a></div>
+      <div class="card-body">
+        <div class="feed">
+          {% for event in recent_events %}
+          <div class="feed-item">
+            <span class="feed-marker" style="background:{% if event.severity == 'critical' %}var(--crit){% elif event.severity == 'high' %}var(--bad){% elif event.severity == 'medium' %}var(--warn){% else %}var(--info){% endif %}"></span>
+            <div class="feed-body">
+              <div class="feed-title"><a href="{{ event.get_absolute_url }}">{{ event.title }}</a></div>
+              <div class="feed-meta tiny">{{ event.analytic_label }} · {{ event.occurred_at|ago }} · {{ event.confidence|pct }}</div>
+            </div>
+            {{ event.status|status_pill }}
+          </div>
+          {% empty %}<p class="small muted center" style="margin:var(--sp-5) 0">No events from this camera yet.</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card card-pad">
+      <div class="upper">Configuration</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        <dt>Site</dt><dd>{{ camera.site.name }}</dd>
+        <dt>Protocol</dt><dd>{{ camera.get_protocol_display }}</dd>
+        <dt>Stream</dt><dd class="mono tiny truncate" style="max-width:180px">{{ camera.masked_url|default:"—" }}</dd>
+        <dt>Resolution</dt><dd class="numeric">{{ camera.resolution_width }}×{{ camera.resolution_height }}</dd>
+        <dt>Analysed at</dt><dd class="numeric">{{ camera.target_fps }} fps</dd>
+        <dt>Evidence</dt><dd>{% if camera.record_evidence %}On{% else %}Off{% endif %}</dd>
+        <dt>Face blur</dt><dd>{% if camera.privacy_blur_faces %}On{% else %}Off{% endif %}</dd>
+      </dl>
+    </div>
+
+    <div class="card card-pad">
+      <div class="upper">Active analytics</div>
+      <div class="stack-sm" style="margin-top:var(--sp-3)">
+        {% for key in camera.enabled_analytics %}
+        <div class="row-between">
+          <span class="small">{{ analytic_labels|get_item:key }}</span>
+          {% if key in camera.blocked_analytics %}<span class="pill pill-warn">Blocked</span>
+          {% else %}<span class="pill pill-ok">Running</span>{% endif %}
+        </div>
+        {% empty %}<p class="small muted" style="margin:0">No analytics enabled on this camera.</p>{% endfor %}
+      </div>
+    </div>
+
+    {% if by_analytic %}
+    <div class="card card-pad">
+      <div class="upper">Events this week ({{ events_7d }})</div>
+      <div style="margin-top:var(--sp-3)">
+        {% for row in by_analytic %}
+        <div style="margin-bottom:var(--sp-3)">
+          <div class="row-between small"><span>{{ row.label }}</span><span class="semibold numeric">{{ row.total }}</span></div>
+          <div class="meter" style="margin-top:4px"><div class="meter-fill" style="width:{% progress_width row.total by_analytic.0.total %}%"></div></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if health %}
+    <div class="card card-pad">
+      <div class="upper">Worker telemetry</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        {% for key, value in health.items %}
+          {% if key != 'timings_ms' and key != 'models' and key != 'analytics' %}
+            <dt class="mono tiny">{{ key }}</dt><dd class="mono tiny">{{ value }}</dd>
+          {% endif %}
+        {% endfor %}
+      </dl>
+    </div>
+    {% endif %}
+
+    {% if snapshots %}
+    <div class="card card-pad">
+      <div class="upper">Recent snapshots</div>
+      <div class="grid grid-2" style="gap:6px;margin-top:var(--sp-3)">
+        {% for snapshot in snapshots %}
+          {% if snapshot.image %}
+            <img src="{{ snapshot.image.url }}" alt="Snapshot from {{ snapshot.captured_at }}"
+                 style="aspect-ratio:16/9;object-fit:cover;border-radius:var(--radius-sm)" loading="lazy">
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if 'cameras.manage' in user_permissions %}
+    <form method="post" action="{% url 'dashboard:camera_delete' camera.uid %}"
+          data-confirm="Remove '{{ camera.name }}'? Its events and snapshots are kept for the audit trail.">
+      {% csrf_token %}<button class="btn btn-block" style="color:var(--bad)">Remove camera</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function(){
+  var img = document.getElementById('camera-frame');
+  if (!img) return;
+  /* The image is an MJPEG stream, so the browser plays it — no polling. The
+     server closes it after a few minutes to free the connection; reopen it so
+     an unattended control-room screen keeps showing live video. */
+  var stream = img.src.split('?')[0];
+  function reopen() { if (!document.hidden) img.src = stream + '?t=' + Date.now(); }
+  img.addEventListener('load', function () { img.dataset.ok = '1'; });
+  setInterval(reopen, 290000);
+  document.addEventListener('visibilitychange', function () {
+    /* Leaving the tab open on a hidden page holds a camera session for nothing. */
+    if (document.hidden) { img.removeAttribute('src'); } else { reopen(); }
+  });
+})();
+</script>
+{% endblock %}

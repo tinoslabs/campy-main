@@ -1,0 +1,33 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Blog posts{% endblock %}
+{% block topbar_actions %}<a href="{% url 'cms:cms_post_create' %}" class="btn btn-sm btn-primary">＋ New post</a>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:admin_cms' %}">Website</a> <span>/</span> <span>Posts</span></div>
+  <h1>Blog posts</h1>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Title</th><th>Category</th><th>Author</th><th>Published</th><th>Views</th><th>Status</th><th class="right"></th></tr></thead>
+      <tbody>
+        {% for post in posts %}
+        <tr>
+          <td><a href="{% url 'cms:cms_post_edit' post.pk %}" class="semibold">{{ post.title }}</a>
+            {% if post.is_featured %}<span class="pill pill-accent tiny">Featured</span>{% endif %}
+            <div class="mono tiny dim">/blog/{{ post.slug }}/</div></td>
+          <td class="small">{{ post.category.name|default:"—" }}</td>
+          <td class="small">{{ post.display_author }}</td>
+          <td class="small nowrap">{{ post.published_at|date:"j M Y"|default:"—" }}</td>
+          <td class="numeric small">{{ post.view_count }}</td>
+          <td>{{ post.status|status_pill }}</td>
+          <td class="actions"><a href="{{ post.get_absolute_url }}" class="btn btn-sm btn-ghost" target="_blank" rel="noopener">View</a></td>
+        </tr>
+        {% empty %}<tr><td colspan="7"><div class="empty"><div class="empty-icon" aria-hidden="true">✎</div>
+          <h3>No posts yet</h3><p>Write about what your detectors catch — it is the most persuasive marketing you have.</p>
+          <a href="{% url 'cms:cms_post_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Write a post</a></div></td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

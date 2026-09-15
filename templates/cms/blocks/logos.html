@@ -1,0 +1,8 @@
+<section class="section section-muted">
+  <div class="container center">
+    {% if block.heading %}<p class="upper" style="margin-bottom:var(--sp-4)">{{ block.heading }}</p>{% endif %}
+    <div class="row" style="justify-content:center;gap:var(--sp-6);opacity:.72">
+      {% for item in block.items %}<span class="semibold" style="font-size:1.05rem">{{ item.name }}</span>{% endfor %}
+    </div>
+  </div>
+</section>

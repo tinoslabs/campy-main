@@ -1,0 +1,102 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if zone %}Edit zone{% else %}Draw zone{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs">
+    <a href="{% url 'dashboard:cameras' %}">Cameras</a> <span>/</span>
+    <a href="{{ camera.get_absolute_url }}">{{ camera.name }}</a> <span>/</span>
+    <span>{% if zone %}{{ zone.name }}{% else %}New zone{% endif %}</span>
+  </div>
+  <h1>{% if zone %}Edit “{{ zone.name }}”{% else %}Draw a zone{% endif %}</h1>
+  <p class="subtitle">Click on the camera view to place points. Click a point again to remove it.</p>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {{ form.polygon }}
+  <div class="grid" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+    <div class="card">
+      <div class="card-head">
+        <h2 style="font-size:1.02rem">Camera view</h2>
+        <div class="row row-tight">
+          <span class="small muted"><strong id="zone-point-count">0</strong> points</span>
+          <button type="button" class="btn btn-sm" id="zone-undo">Undo</button>
+          <button type="button" class="btn btn-sm" id="zone-clear">Clear</button>
+        </div>
+      </div>
+      <div class="card-body card-body-flush">
+        <div class="zone-canvas" id="zone-canvas">
+          <img src="{% url 'dashboard:camera_preview' camera.uid %}" alt="{{ camera.name }} view"
+               style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"
+               onerror="this.style.display='none'">
+          {# Existing zones for reference, so a new one can be placed relative to them. #}
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;pointer-events:none">
+            {% for other in existing_zones %}
+              {% if other.polygon %}
+              <polygon class="zone-poly {{ other.kind }}" style="opacity:.4"
+                       points="{% for point in other.polygon %}{{ point.0|mul:100|floatformat:2 }},{{ point.1|mul:100|floatformat:2 }} {% endfor %}"/>
+              {% endif %}
+            {% endfor %}
+          </svg>
+          <svg id="zone-editor-svg"></svg>
+        </div>
+      </div>
+      <div class="card-foot">
+        <p class="tiny dim" style="margin:0">
+          Points are stored as fractions of the frame, so a zone keeps its position even if the
+          camera's resolution changes. Geofencing tests a person's <strong>feet</strong>, not their
+          centre — somebody standing just outside a line is not counted as inside it.
+        </p>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">Zone settings</h2></div>
+        <div class="card-body">
+          {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+          {% if form.polygon.errors %}<div class="alert alert-error">{{ form.polygon.errors }}</div>{% endif %}
+          {% for field in form %}
+            {% if field.name != 'polygon' %}{% include "partials/form_field.html" with field=field %}{% endif %}
+          {% endfor %}
+        </div>
+        <div class="card-foot row">
+          <button type="submit" class="btn btn-primary">Save zone</button>
+          <a href="{{ camera.get_absolute_url }}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <div class="upper">Zone types</div>
+        <dl class="kv" style="margin-top:var(--sp-3)">
+          <dt>Restricted</dt><dd class="small">Alerts when anyone enters without authorisation.</dd>
+          <dt>Hazard</dt><dd class="small">Same, at critical severity — machinery and danger zones.</dd>
+          <dt>Monitored</dt><dd class="small">Logs presence without raising an alarm.</dd>
+          <dt>Counting</dt><dd class="small">Occupancy counting with an optional limit.</dd>
+          <dt>Shelf</dt><dd class="small">Stock area watched by theft detection.</dd>
+          <dt>Exclusion</dt><dd class="small">Ignore this area entirely — a busy road through a window.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var canvas = document.getElementById('zone-canvas');
+  var kindSelect = document.getElementById('id_kind');
+  var editor = window.CampyZoneEditor(canvas, {
+    input: '#id_polygon',
+    counter: '#zone-point-count',
+    clear: '#zone-clear',
+    undo: '#zone-undo',
+    kind: kindSelect ? kindSelect.value : 'restricted'
+  });
+  if (kindSelect) kindSelect.addEventListener('change', function(){
+    document.querySelectorAll('#zone-editor-svg .zone-poly').forEach(function(p){
+      p.setAttribute('class', 'zone-poly ' + kindSelect.value);
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Incidents{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Incidents</h1>
+  <p class="subtitle">Related events grouped into one thing to deal with — {{ total|intcomma }} shown</p>
+</div>
+
+<div class="toolbar">
+  <a href="?status=open" class="chip {% if status == 'open' %}chip-active{% endif %}">Open</a>
+  <a href="?status=resolved" class="chip {% if status == 'resolved' %}chip-active{% endif %}">Resolved</a>
+  <a href="?status=closed" class="chip {% if status == 'closed' %}chip-active{% endif %}">Closed</a>
+  <a href="?status=" class="chip {% if not status %}chip-active{% endif %}">All</a>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Reference</th><th>Incident</th><th>Severity</th><th>Camera</th><th>Events</th><th>Started</th><th>Status</th><th>Assigned</th></tr></thead>
+      <tbody>
+        {% for incident in incidents %}
+        <tr>
+          <td class="mono small"><a href="{{ incident.get_absolute_url }}">{{ incident.reference }}</a></td>
+          <td><span class="semibold">{{ incident.title|truncatechars:56 }}</span>
+            <div class="tiny dim">{% for key in incident.analytics %}{{ key }}{% if not forloop.last %}, {% endif %}{% endfor %}</div></td>
+          <td>{{ incident.severity|severity_badge }}</td>
+          <td class="small">{{ incident.primary_camera.name|default:"—" }}</td>
+          <td class="numeric">{{ incident.event_count }}</td>
+          <td class="nowrap small">{{ incident.started_at|date:"j M, H:i" }}</td>
+          <td>{{ incident.status|status_pill }}</td>
+          <td class="small">{{ incident.assigned_to.get_short_name|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty"><div class="empty-icon" aria-hidden="true">✓</div><h3>No incidents</h3><p>Nothing has needed grouping into an incident yet.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

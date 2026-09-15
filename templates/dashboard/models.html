@@ -1,0 +1,119 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Models{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Model registry</h1>
+  <p class="subtitle">Which model runs in which slot. Deploying takes effect on every camera immediately.</p></div>
+
+<h2 style="font-size:1.1rem">Deployment slots</h2>
+<div class="grid grid-auto-lg" style="margin-bottom:var(--sp-6)">
+  {% for slot in slots %}
+  <div class="card card-pad">
+    <div class="row-between">
+      <div>
+        <h3 style="margin:0;font-size:1rem">{{ slot.label }}</h3>
+        <span class="mono tiny dim">{{ slot.slot }}</span>
+      </div>
+      {% if slot.loaded %}<span class="pill pill-ok">Live</span>
+      {% else %}<span class="pill pill-muted">Classical fallback</span>{% endif %}
+    </div>
+    {% if slot.deployed %}
+      <div class="panel" style="margin-top:var(--sp-3)">
+        <div class="row-between">
+          <a href="{{ slot.deployed.get_absolute_url }}" class="semibold small">{{ slot.deployed.name }} v{{ slot.deployed.version }}</a>
+          {% if slot.deployed.is_base_model %}<span class="pill pill-info tiny">Campy base</span>{% endif %}
+        </div>
+        <div class="tiny dim">{{ slot.deployed.accuracy|pct }} accuracy · {{ slot.deployed.parameter_count|intcomma }} params · {{ slot.deployed.inference_ms|floatformat:1 }} ms</div>
+      </div>
+      {% if can_deploy and not slot.deployed.is_base_model %}
+      <form method="post" action="{% url 'dashboard:model_retire' slot.deployed.uid %}" style="margin-top:var(--sp-3)"
+            data-confirm="Roll back this model? Cameras will fall back to the previous model or the classical detectors.">
+        {% csrf_token %}<button class="btn btn-sm btn-block">Roll back</button>
+      </form>
+      {% endif %}
+    {% else %}
+      <p class="small muted" style="margin-top:var(--sp-3)">
+        Nothing deployed here. The analytic that uses this slot runs on Campy AI's built-in
+        classical detectors — useful from day one, but a trained model is more accurate.
+      </p>
+    {% endif %}
+    {% if slot.candidates and can_deploy %}
+    <details style="margin-top:var(--sp-3)">
+      <summary class="small semibold" style="cursor:pointer">{{ slot.candidates|length }} version(s) available</summary>
+      <div class="stack-sm" style="margin-top:var(--sp-3)">
+        {% for candidate in slot.candidates %}
+        <div class="row-between">
+          <a href="{{ candidate.get_absolute_url }}" class="small">v{{ candidate.version }} · {{ candidate.accuracy|pct }}</a>
+          {% if not candidate.is_deployed %}
+          <form method="post" action="{% url 'dashboard:model_deploy' candidate.uid %}">{% csrf_token %}
+            <button class="btn btn-sm">Deploy</button></form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<h2 style="font-size:1.1rem">Your trained models</h2>
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Model</th><th>Slot</th><th>Accuracy</th><th>F1</th><th>Params</th><th>Size</th><th>Speed</th><th>Status</th><th class="right"></th></tr></thead>
+      <tbody>
+        {% for version in versions %}
+        <tr>
+          <td><a href="{{ version.get_absolute_url }}" class="semibold">{{ version.name }}</a>
+            <div class="tiny dim">v{{ version.version }} · {{ version.created_at|date:"j M Y" }}{% if version.dataset %} · {{ version.dataset.name }}{% endif %}</div></td>
+          <td><span class="pill pill-muted">{{ version.slot_label }}</span></td>
+          <td class="numeric">{{ version.accuracy|pct }}</td>
+          <td class="numeric">{{ version.f1_score|pct }}</td>
+          <td class="numeric small">{{ version.parameter_count|intcomma }}</td>
+          <td class="small">{{ version.size_label }}</td>
+          <td class="numeric small">{{ version.inference_ms|floatformat:1 }} ms</td>
+          <td>{{ version.status|status_pill }}</td>
+          <td class="actions">
+            {% if can_deploy and not version.is_deployed %}
+            <form method="post" action="{% url 'dashboard:model_deploy' version.uid %}" style="display:inline">
+              {% csrf_token %}<button class="btn btn-sm btn-primary">Deploy</button></form>
+            {% endif %}
+            <a href="{{ version.get_absolute_url }}" class="btn btn-sm btn-ghost">Open</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9"><div class="empty">
+          <div class="empty-icon" aria-hidden="true">◆</div><h3>No trained models yet</h3>
+          <p>Train one from a dataset and it will appear here, ready to deploy.</p>
+          {% if 'training.view' in user_permissions %}<a href="{% url 'dashboard:datasets' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Go to datasets</a>{% endif %}
+        </div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if base_models %}
+<h2 style="font-size:1.1rem;margin-top:var(--sp-6)">Campy AI base models</h2>
+<p class="small muted">Provided by Campy AI to every workspace. Your own models always take precedence.</p>
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Model</th><th>Slot</th><th>Accuracy</th><th>Params</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for version in base_models %}
+        <tr>
+          <td><a href="{{ version.get_absolute_url }}" class="semibold">{{ version.name }}</a> <span class="tiny dim">v{{ version.version }}</span></td>
+          <td><span class="pill pill-muted">{{ version.slot_label }}</span></td>
+          <td class="numeric">{{ version.accuracy|pct }}</td>
+          <td class="numeric small">{{ version.parameter_count|intcomma }}</td>
+          <td>{{ version.status|status_pill }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

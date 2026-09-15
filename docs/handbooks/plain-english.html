@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Campy AI — Plain English Handbook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<link rel="stylesheet" href="fonts.css" media="all" onerror="">
+<link rel="stylesheet" href="style.css">
+<style>
+  body{font-size:11pt; line-height:1.62}
+  p{max-width:70ch; margin-bottom:3.2mm}
+  .lede{font-size:12.4pt}
+  h1.chapter{font-size:22pt}
+  h2{font-size:13.4pt; margin-top:9mm}
+  .qa{border-top:.4pt solid var(--rule-soft); padding:3.4mm 0; page-break-inside:avoid}
+  .qa:last-of-type{border-bottom:.4pt solid var(--rule-soft)}
+  .qa h3{margin:0 0 1.4mm; font-size:11pt}
+  .qa p{margin:0; color:var(--ink-2); font-size:10.4pt}
+  .plain-table td{font-size:10pt}
+</style>
+</head><body>
+
+<div class="cover">
+  <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+    <circle cx="20" cy="20" r="18" fill="none" stroke="#e8f2f0" stroke-width="2.2" opacity=".3"/>
+    <circle cx="20" cy="20" r="10.5" fill="none" stroke="#4ec2b2" stroke-width="2.4"/>
+    <circle cx="20" cy="20" r="3.6" fill="#4ec2b2"/>
+  </svg>
+  <div class="brand">Campy <span>AI</span></div>
+  <div class="kind">Plain English Handbook</div>
+  <h1>How your cameras start paying attention</h1>
+  <p class="sub">What we connect to, what the system watches for, and what you
+  will actually see — explained without a single piece of jargon.</p>
+  <div class="meta">
+    <span>FOR OWNERS, MANAGERS AND SECURITY TEAMS</span>
+    <span>REVISION 1</span>
+  </div>
+</div>
+
+<div class="toc">
+  <div class="eyebrow">Contents</div>
+  <h1 class="chapter">Plain English Handbook</h1><hr class="chapter-rule">
+  <ol>
+    <li><span class="t">The problem this solves</span><span class="d">Your cameras already record everything. Nobody watches.</span></li>
+    <li><span class="t">What we connect to</span><span class="d">Your existing cameras. No new hardware.</span></li>
+    <li><span class="t">How the camera is connected</span><span class="d">What happens on installation day</span></li>
+    <li><span class="t">How it actually works</span><span class="d">From a picture to a message, in six steps</span></li>
+    <li><span class="t">The seven things it watches for</span><span class="d">And what each one is genuinely good at</span></li>
+    <li><span class="t">What you will see</span><span class="d">Alerts, the daily view, and who gets told what</span></li>
+    <li><span class="t">Why it does not spam you</span><span class="d">The part most systems get wrong</span></li>
+    <li><span class="t">Teaching it about your site</span><span class="d">It gets better because you correct it</span></li>
+    <li><span class="t">Privacy and your staff</span><span class="d">What is stored, what is not, and what to tell people</span></li>
+    <li><span class="t">Honest limits</span><span class="d">What it cannot do</span></li>
+    <li><span class="t">Common questions</span><span class="d">The ones we are always asked</span></li>
+  </ol>
+  
+</div>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 1</div>
+<h1 class="chapter">The problem this solves</h1><hr class="chapter-rule">
+
+<p class="lede">Your cameras already record everything that happens. The trouble
+is that footage only helps <em>after</em> something has gone wrong — and only if
+somebody is willing to scrub through hours of it.</p>
+
+<p>A control room with forty screens has one person watching. Within twenty
+minutes, nobody is really watching any of them. This is not a failure of
+attention; it is what happens to every human being asked to stare at mostly
+nothing.</p>
+
+<p>So the fire is found when somebody smells it. The restricted door being
+propped open is found when there is an accident. The stock going missing is
+found at the next count, three weeks later.</p>
+
+<p>Campy AI watches those same camera feeds continuously and tells you the
+handful of things that actually matter, as they happen, in ordinary sentences:</p>
+
+<div class="key">
+<p style="font-size:11.5pt;margin:0"><em>"Unauthorised entry into Machine Guard Zone —
+Assembly Line A — 21:14."</em></p>
+</div>
+
+<p>Not a number on a chart. Not a graph you need an analyst to read. A sentence
+you can act on.</p>
+
+<h2>What changes for you</h2>
+<table class="plain-table">
+  <thead><tr><th>Today</th><th>With Campy AI</th></tr></thead>
+  <tbody>
+    <tr><td>You find out after the event</td><td>You find out while it is happening</td></tr>
+    <tr><td>Somebody has to be watching</td><td>Nobody has to be watching</td></tr>
+    <tr><td>Reviewing footage takes hours</td><td>The relevant ninety seconds is already picked out</td></tr>
+    <tr><td>Rules depend on supervision</td><td>The same rule applies at 3 a.m. and at shift change</td></tr>
+  </tbody>
+</table>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 2</div>
+<h1 class="chapter">What we connect to</h1><hr class="chapter-rule">
+
+<p class="lede">Your existing cameras. That is the whole answer. You do not buy
+new cameras, you do not re-cable anything, and nothing about your current setup
+is thrown away.</p>
+
+<h2>Will it work with what I have?</h2>
+<p>Almost certainly yes. If your cameras were installed in the last ten years or
+so, they can already send video over your network, and that is all we need.
+This includes:</p>
+<ul>
+  <li>Any modern IP camera — Hikvision, Dahua, CP Plus, Axis, Uniview, and the
+  dozens of brands that resell them.</li>
+  <li>Cameras plugged into an NVR or DVR box, which is the usual arrangement.
+  We connect to the box.</li>
+  <li>Older analogue cameras, provided they run into a recorder. The recorder
+  does the converting; the cameras themselves never change.</li>
+</ul>
+
+<div class="note">
+<h4>A simple test</h4>
+<p>If you can already see your cameras on a phone app or a web page, Campy AI
+can read them too. It is the same video, arriving the same way.</p>
+</div>
+
+<h2>What we do need</h2>
+<table class="plain-table">
+  <thead><tr><th>What</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>The camera or recorder's address on your network</td><td>So the software knows where to look. Your installer or IT person has this.</td></tr>
+    <tr><td>The username and password for the cameras</td><td>The same ones used to view them today.</td></tr>
+    <tr><td>One computer on the same network</td><td>This is where Campy AI runs. It can be a server in a cupboard; it does not need to be anything exotic.</td></tr>
+  </tbody>
+</table>
+
+<h2>What we do not need</h2>
+<ul>
+  <li><strong>No new cameras.</strong> The point of the product is that you
+  already own the hardware.</li>
+  <li><strong>No cloud upload.</strong> Your video never leaves your building.
+  There is nothing to upload and no external service watching it.</li>
+  <li><strong>No internet connection for the cameras.</strong> In fact we
+  recommend the opposite — cameras should not be reachable from outside at all.</li>
+  <li><strong>No change to how you record.</strong> Your existing recording keeps
+  working exactly as it does now. Campy AI watches alongside it.</li>
+</ul>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 3</div>
+<h1 class="chapter">How the camera is connected</h1><hr class="chapter-rule">
+
+<p class="lede">Installation day, start to finish. Most sites are working within
+an afternoon.</p>
+
+<div class="steps">
+  <div class="step">
+    <h3>The software is installed on one computer</h3>
+    <p>A server on the same network as the cameras. Nothing is installed on the
+    cameras themselves, and nothing is installed on staff computers — people use
+    it through a web browser.</p>
+  </div>
+  <div class="step">
+    <h3>Your sites and cameras are listed</h3>
+    <p>A "site" is a building or a floor. Each camera is added under its site
+    with a name a person would use — <em>Main Entrance</em>, <em>Loading Bay</em>,
+    <em>Stockroom</em> — not a serial number.</p>
+  </div>
+  <div class="step">
+    <h3>Each camera is pointed at</h3>
+    <p>Usually this is just the camera's address and password. The system then
+    asks the camera where its video is, and the camera answers. There is a
+    <strong>Test connection</strong> button that either shows a picture or tells
+    you plainly what is wrong.</p>
+  </div>
+  <div class="step">
+    <h3>You choose what each camera watches for</h3>
+    <p>Not every camera needs everything. The stockroom camera watches for theft
+    and objects left behind. The corridor camera watches crowding. The camera
+    over the machinery watches the guard zone. Switching off what a camera does
+    not need makes it faster and quieter.</p>
+  </div>
+  <div class="step">
+    <h3>Areas are drawn on the picture</h3>
+    <p>Somebody drags a shape around the machinery on a still image from that
+    camera and calls it <em>Machine Guard Zone</em>. That is a geofence — a line
+    the system understands. It takes about fifteen seconds per area.</p>
+  </div>
+  <div class="step">
+    <h3>You say who gets told what</h3>
+    <p>Fire goes to everybody, immediately. Crowding at the entrance goes to the
+    floor supervisor during working hours. A restricted-area entry at 2 a.m. goes
+    to the security manager's phone. Each rule is a sentence you fill in.</p>
+  </div>
+</div>
+
+<div class="note">
+<h4>You can see it working before you connect anything</h4>
+<p>Campy AI includes built-in demonstration cameras that play realistic
+simulated scenes — someone entering a restricted area, a fire starting, a
+corridor filling up. You can watch every feature work and decide whether you
+want it before an installer visits your site.</p>
+</div>
+
+<h2>How the video travels</h2>
+<p>The Campy AI computer reaches out to each camera and pulls pictures from it,
+several times a second. Nothing is sent the other way, and no camera is
+reachable from the internet. Your staff see the results in a browser, the same
+way they would use any internal website.</p>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 4</div>
+<h1 class="chapter">How it actually works</h1><hr class="chapter-rule">
+
+<p class="lede">Six steps, several times a second, for every camera. Nothing here
+is magic, and it helps to know what the system is really doing.</p>
+
+<div class="steps">
+  <div class="step">
+    <h3>It takes a picture</h3>
+    <p>About six still pictures every second from each camera. That is plenty —
+    nobody walks into a restricted room and out again in a sixth of a second.</p>
+  </div>
+  <div class="step">
+    <h3>It learns what the empty room looks like</h3>
+    <p>Over the first minute or so it builds up a picture of the room with
+    nobody in it: the shelves, the floor, the machinery. From then on it can tell
+    what has changed. It keeps updating, so when somebody moves a pallet, the
+    pallet becomes part of the room within a minute rather than being reported
+    forever.</p>
+  </div>
+  <div class="step">
+    <h3>It works out what the changed bits are</h3>
+    <p>Is that shape a person? A box? A trolley? This is where the actual AI
+    happens — a model that has been trained on what people and objects look like
+    from a camera's point of view.</p>
+  </div>
+  <div class="step">
+    <h3>It follows each person from picture to picture</h3>
+    <p>This is the difference between "there is a person" and "<em>this</em>
+    person walked from the door to the shelf and stood there for ninety
+    seconds." Without it you have counting; with it you have behaviour.</p>
+  </div>
+  <div class="step">
+    <h3>It checks each rule you switched on</h3>
+    <p>Is anyone inside a restricted area? How many people are in this corridor?
+    Does that flickering orange patch look like fire? Is there a bag that has sat
+    still for four minutes with nobody near it?</p>
+  </div>
+  <div class="step">
+    <h3>It decides whether a human needs to know</h3>
+    <p>Most of what it notices is not worth interrupting anybody for. What
+    survives becomes an alert, with the picture attached, in a sentence that says
+    what happened, where, and when.</p>
+  </div>
+</div>
+
+<div class="key">
+<h4>The honest version of "AI"</h4>
+<p>It is not watching in the way a person watches. It has no idea what your
+business does, and it never decides that somebody is guilty of anything. What it
+does is notice specific patterns very reliably, at 3 a.m., on forty cameras at
+once, without ever getting bored. That is a genuinely useful thing to have, and
+it is worth understanding it as exactly that rather than as something smarter.</p>
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 5</div>
+<h1 class="chapter">The seven things it watches for</h1><hr class="chapter-rule">
+
+<p class="lede">Each one can be switched on or off per camera. Here is what each
+is genuinely good at — and where each is weaker.</p>
+
+<h2>Movement and posture</h2>
+<p>Whether people are walking, standing, sitting, bending, running, or have not
+moved in a long time. It flags somebody running indoors, or somebody who appears
+to have fallen and stayed down.</p>
+<p><strong>Good for:</strong> spotting a fall in an area nobody passes through
+often; noticing unsafe speed near machinery.
+<strong>Weaker at:</strong> telling you <em>why</em> — it knows somebody ran, not
+whether they were late or fleeing.</p>
+
+<h2>Recognising your staff</h2>
+<p>If you choose to enrol them, the system can say <em>who</em> rather than
+<em>somebody</em>. This is off until you switch it on, and requires written
+consent per person.</p>
+<p><strong>Good for:</strong> knowing whether a restricted-area entry was an
+authorised engineer or a stranger.
+<strong>Weaker at:</strong> poor light, faces turned away, or people in masks.</p>
+
+<h2>Restricted areas</h2>
+<p>You draw a line around an area; the system tells you when somebody crosses it
+who should not. Areas can be restricted only at certain hours.</p>
+<p><strong>Good for:</strong> server rooms, machinery, stockrooms, roof access —
+the single most useful feature on most sites.
+<strong>Weaker at:</strong> nothing much. This is the most reliable of the seven.</p>
+
+<h2>Crowding</h2>
+<p>How many people are in an area, and whether the flow is orderly or turning
+into a crush.</p>
+<p><strong>Good for:</strong> entrances at shift change, canteens at lunch,
+campus corridors between classes.
+<strong>Weaker at:</strong> very dense crowds where people are mostly hidden
+behind each other, where it estimates rather than counts.</p>
+
+<h2>Theft-related behaviour</h2>
+<p>Repeated handling of stock, unusual carrying, lingering at shelves, items
+disappearing from a shelf area.</p>
+<div class="warn">
+<h4>This flags behaviour, never people</h4>
+<p>It says <em>this is worth a look</em> — never <em>this person is a thief</em>.
+It cannot see inside a bag or a pocket, and it does not know what your stock is
+worth. Treat every one of these as a prompt to check the footage yourself, and
+say so in your staff policy.</p>
+</div>
+
+<h2>Dangerous or abandoned objects</h2>
+<p>Things that should not be where they are: a tool left in a walkway, a bag
+nobody is standing near, a spill nobody has cleared.</p>
+<p><strong>Good for:</strong> unattended items in public areas; obstructions in
+fire escapes.
+<strong>Weaker at:</strong> naming the object. It is often more certain that
+<em>something was left</em> than about <em>what</em> it is — which is usually the
+part that matters anyway.</p>
+
+<h2>Fire and smoke</h2>
+<p>Flame colour, the specific way fire flickers, and a fire's tendency to grow —
+checked together, then confirmed by a trained model.</p>
+<p><strong>Good for:</strong> high ceilings, loading bays, open yards and
+warehouse racking, where a ceiling-mounted smoke sensor is slow or useless.
+<strong>Weaker at:</strong> fires outside the camera's view, and smoke behind
+racking. It complements your fire alarm; it does not replace it, and it is not a
+certified fire detection system.</p>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 6</div>
+<h1 class="chapter">What you will see</h1><hr class="chapter-rule">
+
+<p class="lede">Three things, depending on who you are and what you came to do.</p>
+
+<h2>An alert, when something happens</h2>
+<p>An email, a message, or a notice in the app — whichever you chose. It contains
+a sentence, the camera name, the time, and the picture from the moment it
+happened, with the relevant part outlined.</p>
+
+<h2>The daily view</h2>
+<p>When somebody opens Campy AI, the first screen answers four questions without
+being asked: what happened in the last day, what still needs somebody's
+attention, whether every camera is working, and how quickly the team is
+responding to alerts.</p>
+
+<h2>The live wall</h2>
+<p>Every camera at once, with what the system currently sees drawn on top — the
+people it is following, the areas you have marked, the counts. This is the screen
+for a control room.</p>
+
+<h2>Different people see different things</h2>
+<p>Everybody signs in as themselves, and what they can see and do follows their
+job:</p>
+<table class="plain-table">
+  <thead><tr><th>Role</th><th>What they get</th></tr></thead>
+  <tbody>
+    <tr><td class="name">Owner</td><td>Everything, including the bill.</td></tr>
+    <tr><td class="name">Administrator</td><td>Runs the system day to day.</td></tr>
+    <tr><td class="name">Security manager</td><td>Cameras, restricted areas, incidents, who gets alerted.</td></tr>
+    <tr><td class="name">Control-room operator</td><td>The live wall and incoming alerts. Nothing else — deliberately.</td></tr>
+    <tr><td class="name">HR manager</td><td>Staff-related insight. No camera configuration.</td></tr>
+    <tr><td class="name">Auditor</td><td>Read-only, plus the full record of who did what.</td></tr>
+    <tr><td class="name">Viewer</td><td>Look, do not touch.</td></tr>
+  </tbody>
+</table>
+<p>You can also build your own roles if none of these match how your site is
+organised.</p>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 7</div>
+<h1 class="chapter">Why it does not spam you</h1><hr class="chapter-rule">
+
+<p class="lede">This is the part most camera-analytics systems get wrong, and the
+reason most of them end up switched off within a month.</p>
+
+<p>A system that sends four hundred alerts a day is worse than no system at all.
+People stop reading them, and then the one that mattered goes unread too. So a
+detection has to survive three separate filters before anybody is disturbed:</p>
+
+<div class="steps">
+  <div class="step">
+    <h3>The same thing seen repeatedly is one thing</h3>
+    <p>Somebody standing in a restricted area appears in every picture for as
+    long as they stand there. That is one event with a counter, not sixty
+    events.</p>
+  </div>
+  <div class="step">
+    <h3>Related events become one incident</h3>
+    <p>A person crossing three zones on their way through a building is one
+    incident to review, not three separate things to work out the connection
+    between.</p>
+  </div>
+  <div class="step">
+    <h3>Your rules decide who is actually told</h3>
+    <p>You set how serious something has to be, how sure the system has to be,
+    how long to stay quiet after alerting once, how many times something must
+    happen before it counts at all, and which hours the rule applies. You can
+    also say: if nobody acknowledges this within ten minutes, tell somebody
+    more senior.</p>
+  </div>
+</div>
+
+<div class="note">
+<h4>And when it is wrong, you say so</h4>
+<p>Every alert has a <strong>false alarm</strong> button. That is not just
+closing it — that picture can be fed back into the system as an example of what
+<em>not</em> to flag, and the mistake is trained out. The system gets quieter
+over time because your team corrects it, not because somebody turned down a
+sensitivity dial and lost real detections along with the noise.</p>
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 8</div>
+<h1 class="chapter">Teaching it about your site</h1><hr class="chapter-rule">
+
+<p class="lede">A system trained on pictures from the internet has never seen your
+uniform, your machinery, or your idea of unsafe. Campy AI can be taught.</p>
+
+<p>The AI in Campy AI is entirely ours — we built the whole thing rather than
+renting somebody else's. The practical consequence for you is that you can train
+it yourself, on your own pictures, on your own computer, and the result belongs
+to you.</p>
+
+<h2>What that looks like in practice</h2>
+<div class="steps">
+  <div class="step">
+    <h3>Collect examples</h3>
+    <p>Upload pictures, take them from a camera, or — best of all — use the
+    alerts your team marked as false alarms. Those are already labelled by the
+    people who know the site.</p>
+  </div>
+  <div class="step">
+    <h3>Label them in the browser</h3>
+    <p>Click through pictures saying what each one is. A few hundred is usually
+    enough. No software to install, no data scientist required.</p>
+  </div>
+  <div class="step">
+    <h3>Press train, and watch</h3>
+    <p>A chart shows the accuracy climbing while it learns. A small model takes
+    seconds to a few minutes.</p>
+  </div>
+  <div class="step">
+    <h3>Put it to work, or undo it</h3>
+    <p>Deploy the new version to your cameras with one click. If it turns out
+    worse than the old one, go back to the previous version with one click. Every
+    version is kept with its score.</p>
+  </div>
+</div>
+
+<h2>What this is genuinely useful for</h2>
+<ul>
+  <li>Teaching it your high-visibility vests, so it can tell staff from
+  visitors.</li>
+  <li>Teaching it the specific thing that keeps causing false fire alerts on one
+  camera — a reflection, a heater, a particular light.</li>
+  <li>Teaching it equipment specific to your industry that no general model has
+  ever seen.</li>
+</ul>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 9</div>
+<h1 class="chapter">Privacy and your staff</h1><hr class="chapter-rule">
+
+<p class="lede">Monitoring people is a responsibility, not a feature. How you
+introduce this matters as much as how it is configured.</p>
+
+<h2>What the system does and does not store</h2>
+<table class="plain-table">
+  <thead><tr><th></th><th>What happens</th></tr></thead>
+  <tbody>
+    <tr><td class="name">Video</td><td>Not stored by Campy AI at all. Your existing recorder keeps doing that. Campy AI keeps still pictures of moments that triggered an alert.</td></tr>
+    <tr><td class="name">Faces</td><td>If you enrol staff, what is stored is a list of numbers describing the face — not a photograph. You cannot rebuild a face from it. Deleting it is one click.</td></tr>
+    <tr><td class="name">Everyone else</td><td>Faces of people not enrolled can be automatically blurred in every stored picture. This is a setting you can switch on for the whole system.</td></tr>
+    <tr><td class="name">Old records</td><td>Deleted automatically on a schedule you set — thirty days for pictures by default.</td></tr>
+    <tr><td class="name">Who looked</td><td>Every sensitive action is written to a record that cannot be quietly edited, and it exports.</td></tr>
+  </tbody>
+</table>
+
+<h2>Face recognition stays off until you turn it on</h2>
+<p>It requires written consent recorded against each individual. Without that
+consent, the system will not enrol them. This is deliberate friction.</p>
+
+<h2>What to tell your staff</h2>
+<p>Our strong advice, from sites where this has gone well and sites where it has
+not:</p>
+<ul>
+  <li><strong>Tell them before you switch it on</strong>, not after somebody
+  notices.</li>
+  <li><strong>Be specific about what it watches for.</strong> "Restricted areas,
+  crowding and fire" reassures. "AI monitoring" alarms.</li>
+  <li><strong>Say plainly that it is not a productivity monitor.</strong> It does
+  not score people, rank them, or report how long they spent away from a
+  workstation.</li>
+  <li><strong>Explain that theft detection flags behaviour for review</strong>,
+  and that a human always decides what it means.</li>
+  <li><strong>Put the retention period in writing.</strong> People are far more
+  comfortable when they know pictures are deleted after thirty days.</li>
+</ul>
+
+<div class="note">
+<h4>The strongest argument for your staff</h4>
+<p>On most sites the honest pitch is safety, not surveillance. It notices a fall
+in a room nobody walks past. It notices a fire while it is small. It notices a
+crush forming at an exit. Those are things that protect the people being watched.</p>
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 10</div>
+<h1 class="chapter">Honest limits</h1><hr class="chapter-rule">
+
+<p class="lede">Every system of this kind has limits. A vendor who does not tell
+you theirs is hiding them.</p>
+
+<dl class="defs">
+  <dt>It can only see what the camera sees</dt>
+  <dd>A camera pointed at the wrong place, with a dirty lens, or facing into the
+  afternoon sun, gives poor results. Camera placement matters more than any
+  setting in the software.</dd>
+
+  <dt>People need to be reasonably large in the picture</dt>
+  <dd>Somebody at the far end of a large warehouse may be too small to detect
+  reliably. This is a matter of physics, not software.</dd>
+
+  <dt>It does not understand intent</dt>
+  <dd>It sees that someone entered a restricted area. It does not know whether
+  they are an engineer with permission or an intruder — unless you have enrolled
+  your staff, in which case it can tell you who.</dd>
+
+  <dt>Theft detection does not detect theft</dt>
+  <dd>It detects behaviour that is often associated with it. A person is always
+  the one who decides what actually happened.</dd>
+
+  <dt>Fire detection is not a fire alarm</dt>
+  <dd>It is early warning that complements your alarm system. It is not a
+  certified replacement and must not be treated as one.</dd>
+
+  <dt>Very dark scenes are hard</dt>
+  <dd>If your cameras do not have usable night vision, the system sees roughly
+  what you would see on the same footage — which is not much.</dd>
+
+  <dt>Watching costs computing power</dt>
+  <dd>Every camera being analysed takes real processing. Plan for two to three
+  cameras per processor core with everything switched on — more if a camera only
+  needs one or two of the seven. Your installer measures this on the actual
+  machine before committing to a camera count.</dd>
+</dl>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 11</div>
+<h1 class="chapter">Common questions</h1><hr class="chapter-rule">
+
+<div class="qa"><h3>Do we have to buy new cameras?</h3>
+<p>No. That is the entire point of the product. If your cameras can be viewed on
+a phone or a computer today, they will work.</p></div>
+
+<div class="qa"><h3>Does our video go to the internet?</h3>
+<p>No. Everything runs on a computer in your building. There is no third-party AI
+service in the path and nothing to upload. We recommend your cameras have no
+internet access at all.</p></div>
+
+<div class="qa"><h3>Will this slow down or interfere with our recording?</h3>
+<p>No. Campy AI reads the same stream your recorder reads; it does not take it
+over. Your existing recording continues untouched. Very old cameras that allow
+only two viewers at a time are the one thing to check with your installer.</p></div>
+
+<div class="qa"><h3>How long does installation take?</h3>
+<p>Most sites are running the same day. The software installs in minutes; the
+time goes into adding cameras, drawing areas and agreeing who should be alerted
+about what.</p></div>
+
+<div class="qa"><h3>Can we try it before connecting real cameras?</h3>
+<p>Yes. Built-in demonstration cameras play realistic simulated scenes, so you
+can watch every feature work before an installer visits.</p></div>
+
+<div class="qa"><h3>The camera says the password is wrong, but it is right</h3>
+<p>Your camera's address is often given as one long line that already contains
+the username and password. If you paste that <em>and</em> type them into the
+login boxes as well, the camera is sent the login twice and refuses it. Put the
+plain address in the address box and the login in the login boxes — Campy AI
+now separates them for you if you paste the long version.</p></div>
+
+<div class="qa"><h3>Can I get a report I can print or send on?</h3>
+<p>Yes — for one feature or for all of them together, over whatever period you
+choose. It arrives as a PDF containing the picture behind every finding, with
+the person or object outlined and the area they crossed drawn on it, so a safety
+meeting or an insurer can see the moment itself rather than take your word for
+it. Download it from the Analytics page.</p></div>
+
+<div class="qa"><h3>What happens if a camera goes offline?</h3>
+<p>The system notices, retries with increasing patience, and marks the camera
+degraded and then offline. Camera health is on the front screen, so a camera
+that has quietly stopped working does not go unnoticed for weeks.</p></div>
+
+<div class="qa"><h3>How many cameras can one server handle?</h3>
+<p>With all seven features on, plan for two to three cameras per processor core.
+Cameras that only need one or two features, or that watch quiet areas, cost much
+less. Your installer measures your actual hardware rather than guessing.</p></div>
+
+<div class="qa"><h3>Will it flood us with alerts?</h3>
+<p>It is specifically designed not to. Three separate filters stand between a
+detection and a message, and every alert has a false-alarm button that teaches
+the system. See chapter 7.</p></div>
+
+<div class="qa"><h3>Can it tell us who someone is?</h3>
+<p>Only if you enrol them and record their written consent. It is switched off
+by default.</p></div>
+
+<div class="qa"><h3>Is this legal where we operate?</h3>
+<p>Workplace monitoring rules vary by country and often by state. The system
+gives you what compliance needs — consent gating, automatic deletion, face
+blurring and a full audit trail — but the decision to monitor, and the notice you
+give staff, is yours. Take local advice.</p></div>
+
+<div class="qa"><h3>What does it cost to run?</h3>
+<p>A subscription, plus the electricity for one computer. There is no per-camera
+cloud fee and nothing metered per picture analysed — which is precisely why the
+AI is ours rather than rented.</p></div>
+
+<div class="qa"><h3>What if we want to stop?</h3>
+<p>Uninstall the software. Your cameras, your recorder and your footage are
+exactly as they were — Campy AI never changed any of them.</p></div>
+
+</section>
+
+</body></html>

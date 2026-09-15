@@ -1,0 +1,39 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Training{% endblock %}
+{% block topbar_actions %}{% if can_run %}<a href="{% url 'dashboard:training_job_create' %}" class="btn btn-sm btn-primary">▶ New training run</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Training runs</h1><p class="subtitle">Every model Campy AI has trained for this workspace.</p></div>
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Run</th><th>Dataset</th><th>Architecture</th><th>Progress</th><th>Best score</th><th>Duration</th><th>Status</th><th class="right"></th></tr></thead>
+      <tbody>
+        {% for job in jobs %}
+        <tr>
+          <td><a href="{{ job.get_absolute_url }}" class="semibold">{{ job.name }}</a>
+            <div class="tiny dim">{{ job.created_at|date:"j M, H:i" }} · {{ job.created_by.get_short_name|default:"—" }}</div></td>
+          <td class="small">{{ job.dataset.name }}</td>
+          <td><span class="pill pill-muted">{{ job.architecture }}</span></td>
+          <td style="min-width:130px">
+            <div class="row-between tiny"><span>{{ job.current_epoch }}/{{ job.epochs }}</span><span>{{ job.progress|floatformat:0 }}%</span></div>
+            <div class="meter" style="margin-top:3px">
+              <div class="meter-fill {% if job.status == 'failed' %}bad{% elif job.status == 'succeeded' %}ok{% endif %}" style="width:{{ job.progress }}%"></div>
+            </div>
+          </td>
+          <td class="numeric small">{% if job.best_metric %}{{ job.best_metric|pct }}{% else %}—{% endif %}</td>
+          <td class="small">{{ job.duration_seconds|duration }}</td>
+          <td>{{ job.status|status_pill }}</td>
+          <td class="actions"><a href="{{ job.get_absolute_url }}" class="btn btn-sm btn-ghost">Open</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty">
+          <div class="empty-icon" aria-hidden="true">⚙</div><h3>No training runs yet</h3>
+          <p>Build a dataset, then train a model on it. Everything runs inside Campy AI — nothing is sent to a third-party AI service.</p>
+          <a href="{% url 'dashboard:datasets' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Go to datasets</a>
+        </div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

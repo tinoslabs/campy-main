@@ -1,0 +1,178 @@
+services:
+  nginx:
+    # image: nginx:latest
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    environment:
+      DOMAIN: ${DOMAIN}
+    restart: unless-stopped # Automatically restart unless the service is explicitly stopped
+    volumes:
+      # Mount the 'storage' volume to '/var/www/storage' inside the container.
+      # -----------------------------------------------------------
+      # This volume stores persistent data like uploaded files and cache.
+      # The ':ro' option mounts it as read-only in the 'app' service because Nginx only needs to read these files.
+      # The 'app' service mounts the same volume without ':ro' to allow write operations.
+      # -----------------------------------------------------------
+      - static_data:/var/www/static:ro
+      - media_data:/var/www/media:ro
+      - certbot_data:/var/www/certbot:ro
+      - letsencrypt_certs:/etc/letsencrypt:ro
+    networks:
+      - internal
+    ports:
+      # Map port 80 inside the container to the port specified by 'NGINX_PORT' on the host machine.
+      # -----------------------------------------------------------
+      # This allows external access to the Nginx web server running inside the container.
+      # For example, if 'NGINX_PORT' is set to '8080', accessing 'http://localhost:8080' will reach the application.
+      # -----------------------------------------------------------
+      - "${NGINX_PORT:-80}:80"
+      - 443:443
+    depends_on:
+      - app
+
+  app:
+    # image: app:latest
+    # For the app service, we will create a custom image to install the necessary PHP extensions and setup proper permissions.
+    build:
+      context: .
+      dockerfile: ./docker/app/Dockerfile
+      args:
+        - PROJECT_NAME=${PROJECT_NAME}
+    restart: unless-stopped
+    volumes:
+      - ./code:/app:rw
+      - static_data:/app/staticfiles
+      - media_data:/app/mediafiles
+    env_file:
+      - .env
+    networks:
+      - internal
+    # The 'depends_on' attribute with 'condition: service_healthy' ensures that
+    # this service will not start until the 'postgres' service passes its health check.
+    # This prevents the application from trying to connect to the database before it's ready.
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+      start_period: 10s
+
+  # db:
+  #   image: postgres:16
+  #   restart: unless-stopped
+  #   user: postgres
+  #   ports:
+  #     - "${DB_PORT:-5432}:5432"
+  #   environment:
+  #     - POSTGRES_DB=${DB_DATABASE:-app}
+  #     - POSTGRES_USER=${DB_USERNAME:-user}
+  #     - POSTGRES_PASSWORD=${DB_PASSWORD:-secret}
+  #   volumes:
+  #     - db_data:/var/lib/postgresql/data
+  #   networks:
+  #     - internal
+  #   # Health check for PostgreSQL
+  #   # -----------------------------------------------------------
+  #   # Health checks allow Docker to determine if a service is operational.
+  #   # The 'pg_isready' command checks if PostgreSQL is ready to accept connections.
+  #   # This prevents dependent services from starting before the database is ready.
+  #   # -----------------------------------------------------------
+  #   healthcheck:
+  #     test: [ "CMD", "pg_isready" ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+
+  db:
+    image: mysql:8.3
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    environment:
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  # redis:
+  #   image: redis:alpine
+  #   restart: unless-stopped  # Automatically restart unless the service is explicitly stopped
+  #   networks:
+  #     - internal
+  #   # Health check for Redis
+  #   # -----------------------------------------------------------
+  #   # Checks if Redis is responding to the 'PING' command.
+  #   # This ensures that the service is not only running but also operational.
+  #   # -----------------------------------------------------------
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
+
+  certbot:
+    image: certbot/certbot
+    volumes: 
+      - certbot_data:/var/www/html
+      - letsencrypt_certs:/etc/letsencrypt
+    command: certonly --webroot --webroot-path=/var/www/html --force-renewal --no-eff-email --email ${EMAIL} -d ${DOMAIN} --agree-tos
+    depends_on:
+      - nginx
+    profiles:
+      - ssl
+
+networks:
+  # Attach the service to the 'internal' network.
+  # -----------------------------------------------------------
+  # This custom network allows all services within it to communicate using their service names as hostnames.
+  # For example, 'app' can connect to 'db' by using 'db' as the hostname.
+  # -----------------------------------------------------------
+  internal:
+
+volumes:
+  db_data:
+    # This volume is used to persist Database data.
+    # -----------------------------------------------------------
+    # It ensures that the database data is not lost when the container is stopped or removed.
+    # The data will be stored in a Docker-managed volume named 'db_data'.
+    # -----------------------------------------------------------
+  static_data:
+    # This volume is used to persist static data.
+    # -----------------------------------------------------------
+    # It ensures that static assets are not lost when the container is stopped or removed.
+    # -----------------------------------------------------------
+  media_data:
+    # This volume is used to persist media data.
+    # -----------------------------------------------------------
+    # It ensures that uploaded files are not lost when the container is stopped or removed.
+    # -----------------------------------------------------------
+  certbot_data:
+    # This volume is used to persist Certbot data.
+    # -----------------------------------------------------------
+    # It ensures that the certificate challenge files persist between app and nginx container.
+    # -----------------------------------------------------------
+  letsencrypt_certs:
+    # This volume is used to persist Let's Encrypt certificates.
+    # -----------------------------------------------------------
+    # It ensures that the SSL certificates are not lost when the container is stopped or removed.
+    # -----------------------------------------------------------
+

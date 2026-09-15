@@ -1,0 +1,34 @@
+{% extends "public/base.html" %}
+{% load humanize %}
+{% block title %}{{ package.name }} — {{ BRAND.name }}{% endblock %}
+{% block public_content %}
+<section class="section">
+  <div class="container container-narrow">
+    <div class="breadcrumbs"><a href="{% url 'cms:pricing' %}">Pricing</a> <span>/</span> <span>{{ package.name }}</span></div>
+    <h1>{{ package.name }}</h1>
+    <p class="lead">{{ package.tagline }}</p>
+    <div class="price-amount gradient-text" style="margin:var(--sp-4) 0">₹{{ package.price_inr|floatformat:0|intcomma }}
+      <span style="font-size:.9rem;font-weight:500;color:var(--text-3)">/{{ package.get_interval_display|lower }}</span></div>
+    {% if package.description %}<p>{{ package.description|linebreaks }}</p>{% endif %}
+    <div class="grid grid-2" style="margin-top:var(--sp-6)">
+      <div class="card card-pad">
+        <div class="upper">Included</div>
+        <ul class="price-features" style="margin-top:var(--sp-3)">
+          {% for key, label in feature_labels.items %}
+            {% if package.features|get_item:key %}<li>{{ label }}</li>{% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="card card-pad">
+        <div class="upper">Limits</div>
+        <dl class="kv" style="margin-top:var(--sp-3)">
+          {% for key, label in quota_labels.items %}
+            <dt>{{ label }}</dt><dd class="numeric">{{ package.quotas|get_item:key|default:"—" }}</dd>
+          {% endfor %}
+        </dl>
+      </div>
+    </div>
+    <a href="{% url 'accounts:signup' %}" class="btn btn-primary btn-lg" style="margin-top:var(--sp-6)">Start with {{ package.name }}</a>
+  </div>
+</section>
+{% endblock %}

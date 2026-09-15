@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+{% if site_announcement %}
+<div style="background:var(--accent);color:var(--accent-text);text-align:center;padding:8px 16px;font-size:.86rem;font-weight:550">
+  {% if site_announcement_url %}<a href="{{ site_announcement_url }}" style="color:inherit">{{ site_announcement }} →</a>
+  {% else %}{{ site_announcement }}{% endif %}
+</div>
+{% endif %}
+
+<header class="site-header">
+  <div class="container">
+    <nav class="site-nav" aria-label="Primary">
+      <a href="{% url 'cms:home' %}" aria-label="{{ BRAND.name }} home">
+        <img src="{% static BRAND.logo %}" alt="{{ BRAND.name }}" class="logo-light">
+      </a>
+      <div class="site-links">
+        {% if nav_header %}
+          {% for item in nav_header %}
+            <a href="{{ item.resolved_url }}" {% if item.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}>{{ item.label }}</a>
+          {% endfor %}
+        {% else %}
+          <a href="{% url 'cms:features' %}">Features</a>
+          <a href="{% url 'cms:pricing' %}">Pricing</a>
+          <a href="{% url 'cms:blog' %}">Blog</a>
+          <a href="{% url 'cms:faq' %}">FAQ</a>
+          <a href="{% url 'cms:contact' %}">Contact</a>
+        {% endif %}
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-ghost btn-sm" onclick="campyToggleTheme()" aria-label="Toggle dark mode">◐</button>
+      {% if request.user.is_authenticated %}
+        <a href="{% url 'dashboard:home' %}" class="btn btn-primary btn-sm">Dashboard</a>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="btn btn-ghost btn-sm">Sign in</a>
+        <a href="{% url 'accounts:signup' %}" class="btn btn-primary btn-sm">Start free</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+<main id="main-content">
+  <div class="container" style="padding-top:var(--sp-4)">{% include "partials/messages.html" %}</div>
+  {% block public_content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="grid grid-4" style="gap:var(--sp-6)">
+      <div>
+        <img src="{% static 'brand/campy-ai-logo-dark.svg' %}" alt="{{ BRAND.name }}" style="height:32px;margin-bottom:var(--sp-3)">
+        <p style="font-size:.87rem;line-height:1.6;color:#a9b4ca">
+          {{ site_settings.tagline|default:BRAND.tagline }}
+        </p>
+        <div class="row row-tight" style="margin-top:var(--sp-3)">
+          {% if site_settings.linkedin_url %}<a href="{{ site_settings.linkedin_url }}" aria-label="LinkedIn">in</a>{% endif %}
+          {% if site_settings.twitter_url %}<a href="{{ site_settings.twitter_url }}" aria-label="X">𝕏</a>{% endif %}
+          {% if site_settings.youtube_url %}<a href="{{ site_settings.youtube_url }}" aria-label="YouTube">▶</a>{% endif %}
+        </div>
+      </div>
+      <div>
+        <h4>Product</h4>
+        {% if nav_footer_product %}{% for item in nav_footer_product %}<a href="{{ item.resolved_url }}">{{ item.label }}</a>{% endfor %}
+        {% else %}
+          <a href="{% url 'cms:features' %}">Features</a>
+          <a href="{% url 'cms:pricing' %}">Pricing</a>
+          <a href="{% url 'cms:demo' %}">Book a demo</a>
+          <a href="{% url 'accounts:signup' %}">Start free trial</a>
+        {% endif %}
+      </div>
+      <div>
+        <h4>Company</h4>
+        {% if nav_footer_company %}{% for item in nav_footer_company %}<a href="{{ item.resolved_url }}">{{ item.label }}</a>{% endfor %}
+        {% else %}
+          <a href="{% url 'cms:blog' %}">Blog</a>
+          <a href="{% url 'cms:faq' %}">FAQ</a>
+          <a href="{% url 'cms:contact' %}">Contact us</a>
+        {% endif %}
+      </div>
+      <div>
+        <h4>Get in touch</h4>
+        <a href="mailto:{{ site_settings.contact_email|default:BRAND.support_email }}">{{ site_settings.contact_email|default:BRAND.support_email }}</a>
+        {% if site_settings.sales_phone %}<a href="tel:{{ site_settings.sales_phone }}">{{ site_settings.sales_phone }}</a>{% endif %}
+        {% if site_settings.address %}<p style="font-size:.85rem;color:#a9b4ca;margin-top:8px">{{ site_settings.address|linebreaksbr }}</p>{% endif %}
+      </div>
+    </div>
+    <div class="footer-bottom row-between">
+      <span>© {% now "Y" %} {{ site_settings.site_name|default:BRAND.name }}. All rights reserved.</span>
+      <span class="row row-tight">
+        {% for item in nav_footer_legal %}<a href="{{ item.resolved_url }}" style="display:inline">{{ item.label }}</a>{% endfor %}
+      </span>
+    </div>
+  </div>
+</footer>
+{% endblock %}

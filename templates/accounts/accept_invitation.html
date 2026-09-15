@@ -1,0 +1,23 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Join {{ invitation.organization.name }} · {{ BRAND.name }}{% endblock %}
+{% block side_title %}You have been invited{% endblock %}
+{% block side_body %}
+{{ invitation.invited_by.get_full_name|default:"A colleague" }} has invited you to join
+<strong>{{ invitation.organization.name }}</strong> as {{ invitation.role.name }}.
+{% endblock %}
+{% block auth_content %}
+<div class="card card-pad">
+  <span class="pill pill-accent">{{ invitation.role.name }}</span>
+  <h1 style="font-size:1.4rem;margin-top:var(--sp-3)">Join {{ invitation.organization.name }}</h1>
+  <p class="muted small">Set a password for <strong>{{ invitation.email }}</strong> to accept.</p>
+  {% if invitation.message %}
+    <div class="panel" style="margin:var(--sp-4) 0"><p class="small" style="margin:0">“{{ invitation.message }}”</p></div>
+  {% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "partials/form.html" %}
+    <button type="submit" class="btn btn-primary btn-block btn-lg">Accept &amp; join</button>
+  </form>
+  <p class="tiny dim center" style="margin-top:var(--sp-3)">This invitation expires on {{ invitation.expires_at|date:"j M Y" }}.</p>
+</div>
+{% endblock %}

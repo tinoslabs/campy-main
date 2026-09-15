@@ -1,0 +1,80 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if page_obj %}Edit page{% else %}New page{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'cms:cms_pages' %}">Pages</a> <span>/</span> <span>{% if page_obj %}{{ page_obj.title }}{% else %}New{% endif %}</span></div>
+  <h1>{% if page_obj %}Edit “{{ page_obj.title }}”{% else %}Create a page{% endif %}</h1>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="card">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% include "partials/form_field.html" with field=form.title %}
+        <div class="form-grid">
+          {% include "partials/form_field.html" with field=form.slug %}
+          {% include "partials/form_field.html" with field=form.template %}
+          {% include "partials/form_field.html" with field=form.parent %}
+          {% include "partials/form_field.html" with field=form.sort_order %}
+          {% include "partials/form_field.html" with field=form.status %}
+          {% include "partials/form_field.html" with field=form.published_at %}
+        </div>
+        {% include "partials/form_field.html" with field=form.excerpt %}
+        {% include "partials/form_field.html" with field=form.body %}
+        {% include "partials/form_field.html" with field=form.hero_image %}
+        {% include "partials/form_field.html" with field=form.show_in_navigation %}
+        {% include "partials/form_field.html" with field=form.is_homepage %}
+        <fieldset>
+          <legend>Search &amp; social</legend>
+          {% include "partials/form_field.html" with field=form.seo_title %}
+          {% include "partials/form_field.html" with field=form.seo_description %}
+          {% include "partials/form_field.html" with field=form.seo_keywords %}
+          {% include "partials/form_field.html" with field=form.og_image %}
+          {% include "partials/form_field.html" with field=form.canonical_url %}
+          {% include "partials/form_field.html" with field=form.no_index %}
+        </fieldset>
+        <div class="row">
+          <button type="submit" class="btn btn-primary">Save page</button>
+          <a href="{% url 'cms:cms_pages' %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="stack">
+    {% if page_obj %}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Content blocks</h2>
+        <a href="{% url 'cms:cms_block_create' page_obj.pk %}" class="btn btn-sm btn-primary">＋ Block</a></div>
+      <div class="card-body">
+        <div class="stack-sm">
+          {% for block in blocks %}
+          <div class="panel row-between">
+            <div>
+              <span class="pill pill-muted">{{ block.get_kind_display }}</span>
+              <div class="small semibold" style="margin-top:4px">{{ block.heading|default:"(no heading)"|truncatechars:36 }}</div>
+              <div class="tiny dim">order {{ block.sort_order }}{% if not block.is_visible %} · hidden{% endif %}</div>
+            </div>
+            <div class="row row-tight">
+              <a href="{% url 'cms:cms_block_edit' page_obj.pk block.pk %}" class="btn btn-sm btn-ghost">Edit</a>
+              <form method="post" action="{% url 'cms:cms_block_delete' page_obj.pk block.pk %}" data-confirm="Delete this block?">
+                {% csrf_token %}<button class="btn btn-sm btn-ghost" style="color:var(--bad)">×</button></form>
+            </div>
+          </div>
+          {% empty %}
+          <p class="small muted">No blocks. Without them the page renders its plain body text.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <a href="{{ page_obj.get_absolute_url }}" class="btn btn-block" target="_blank" rel="noopener">Preview page →</a>
+    {% else %}
+    <div class="card card-pad">
+      <div class="upper">Blocks</div>
+      <p class="small muted" style="margin-top:var(--sp-3)">Save the page first, then add hero, feature, pricing, FAQ and CTA blocks to it.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

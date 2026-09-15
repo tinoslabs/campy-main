@@ -1,0 +1,12 @@
+<section class="section">
+  <div class="container container-narrow center">
+    {% if block.heading %}<h2>{{ block.heading }}</h2>{% endif %}
+    {% if block.options.embed_url %}
+      <div style="aspect-ratio:16/9;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-2)">
+        <iframe src="{{ block.options.embed_url }}" title="{{ block.heading|default:'Video' }}" style="width:100%;height:100%;border:0" allowfullscreen loading="lazy"></iframe>
+      </div>
+    {% elif block.image %}
+      <img src="{{ block.image.url }}" alt="{{ block.heading|default:'' }}" style="border-radius:var(--radius-lg)">
+    {% endif %}
+  </div>
+</section>

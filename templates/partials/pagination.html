@@ -1,0 +1,18 @@
+{% if page_obj.has_other_pages %}
+<nav class="pagination" aria-label="Pagination">
+  {% if page_obj.has_previous %}
+    <a href="{% querystring page=1 %}" aria-label="First page">« First</a>
+    <a href="{% querystring page=page_obj.previous_page_number %}" rel="prev">‹ Prev</a>
+  {% else %}
+    <span class="dim">« First</span><span class="dim">‹ Prev</span>
+  {% endif %}
+  <span class="current">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a href="{% querystring page=page_obj.next_page_number %}" rel="next">Next ›</a>
+    <a href="{% querystring page=page_obj.paginator.num_pages %}" aria-label="Last page">Last »</a>
+  {% else %}
+    <span class="dim">Next ›</span><span class="dim">Last »</span>
+  {% endif %}
+</nav>
+<p class="center tiny dim" style="margin-top:var(--sp-2)">{{ page_obj.paginator.count|intcomma }} total</p>
+{% endif %}

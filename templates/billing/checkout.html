@@ -1,0 +1,91 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Checkout{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'billing:packages' %}">Packages</a> <span>/</span> <span>Checkout</span></div>
+  <h1>Subscribe to {{ package.name }}</h1>
+</div>
+
+<div class="grid grid-2" style="align-items:start">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.02rem">Payment</h2></div>
+    <div class="card-body">
+      {% if not gateways %}
+      <div class="alert alert-info">
+        <span aria-hidden="true">i</span>
+        <div><strong>No payment gateway is configured on this deployment.</strong>
+          You can still raise an invoice and settle it offline; our team will follow up.</div>
+      </div>
+      {% endif %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+        <fieldset>
+          <legend>Pay with</legend>
+          {% for choice in form.gateway %}
+          <label class="check panel" style="align-items:center;margin-bottom:8px">
+            {{ choice.tag }}
+            <span>
+              <span class="semibold">{{ choice.choice_label }}</span>
+              {% if choice.choice_label == 'Razorpay' %}<div class="tiny dim">Cards, UPI, net banking and wallets — ideal for India</div>
+              {% elif choice.choice_label == 'Stripe' %}<div class="tiny dim">International cards and wallets</div>
+              {% else %}<div class="tiny dim">We raise an invoice and contact you to settle it</div>{% endif %}
+            </span>
+          </label>
+          {% endfor %}
+        </fieldset>
+        {% include "partials/form_field.html" with field=form.currency %}
+        {% if form.extra_cameras %}{% include "partials/form_field.html" with field=form.extra_cameras %}{% endif %}
+        {% include "partials/form_field.html" with field=form.coupon_code %}
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Continue to payment</button>
+        <p class="tiny dim center" style="margin-top:var(--sp-3)">
+          Payments are processed by the gateway you choose. Campy AI never sees or stores your card details.
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Order summary</h2></div>
+      <div class="card-body">
+        <div class="row-between" style="padding:8px 0">
+          <span>{{ package.name }} · {{ package.get_interval_display|lower }}</span>
+          <span class="numeric semibold">{{ symbol }}{{ price|floatformat:2|intcomma }}</span>
+        </div>
+        {% if setup_fee %}
+        <div class="row-between" style="padding:8px 0;border-top:1px solid var(--border)">
+          <span>One-time setup</span><span class="numeric">{{ symbol }}{{ setup_fee|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+        {% if tax_rate %}
+        <div class="row-between" style="padding:8px 0;border-top:1px solid var(--border)">
+          <span class="muted small">GST @ {{ tax_rate }}%</span>
+          <span class="numeric small muted">calculated at checkout</span>
+        </div>
+        {% endif %}
+        <div class="row-between" style="padding:12px 0 0;border-top:2px solid var(--border);margin-top:8px">
+          <span class="semibold">Due today</span>
+          <span class="price-amount" style="font-size:1.5rem">{{ symbol }}{{ price|floatformat:2|intcomma }}</span>
+        </div>
+        {% if package.trial_days %}
+          <p class="small muted" style="margin-top:var(--sp-3)">Includes a {{ package.trial_days }}-day trial.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="upper">What's included</div>
+      <ul class="price-features" style="margin-top:var(--sp-3)">
+        <li><strong>{{ package.quotas.cameras|default:"0" }}</strong>&nbsp;cameras</li>
+        <li><strong>{{ package.quotas.sites|default:"1" }}</strong>&nbsp;site{{ package.quotas.sites|pluralize }}</li>
+        <li><strong>{{ package.quotas.users|default:"1" }}</strong>&nbsp;team members</li>
+        {% for key, label in feature_labels.items %}
+          {% if package.features|get_item:key %}<li>{{ label }}</li>{% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

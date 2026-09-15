@@ -1,0 +1,42 @@
+{% load static humanize %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ BRAND.name }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ BRAND.tagline }}{% endblock %}">
+  {% block meta_extra %}{% endblock %}
+
+  <link rel="icon" type="image/svg+xml" href="{% static 'brand/favicon.svg' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/campy.css' %}">
+
+  {# Set the theme before first paint so a dark-mode user never sees a white flash. #}
+  <script>
+    (function(){
+      try{
+        var t = localStorage.getItem('campy-theme') || 'system';
+        if(t === 'system'){ t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+        document.documentElement.setAttribute('data-theme', t);
+      }catch(e){}
+    })();
+  </script>
+  {% if site_settings.google_analytics_id %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ site_settings.google_analytics_id }}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
+    gtag('js',new Date());gtag('config','{{ site_settings.google_analytics_id }}');</script>
+  {% endif %}
+  {{ site_settings.custom_head_html|safe }}
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a href="#main-content" class="sr-only">Skip to content</a>
+  {% block body %}{% endblock %}
+
+  <script src="{% static 'js/campy.js' %}" defer></script>
+  {{ site_settings.custom_footer_html|safe }}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

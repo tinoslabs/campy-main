@@ -1,0 +1,7 @@
+<section class="section {% if block.background == 'muted' %}section-muted{% endif %}">
+  <div class="container container-narrow center">
+    {% if block.heading %}<h2>{{ block.heading }}</h2>{% endif %}
+    {% if block.body %}<p class="lead">{{ block.body }}</p>{% endif %}
+    <a href="{% url 'cms:contact' %}" class="btn btn-primary btn-lg">{{ block.primary_label|default:"Contact us" }}</a>
+  </div>
+</section>

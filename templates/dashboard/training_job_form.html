@@ -1,0 +1,70 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}New training run{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:training_jobs' %}">Training</a> <span>/</span> <span>New run</span></div>
+  <h1>Train a model</h1>
+  <p class="subtitle">Campy AI's own architectures, trained on your data, on your infrastructure.</p>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="grid grid-2" style="align-items:start">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">What to train</h2></div>
+        <div class="card-body">
+          {% include "partials/form_field.html" with field=form.name %}
+          {% include "partials/form_field.html" with field=form.dataset %}
+          {% include "partials/form_field.html" with field=form.architecture %}
+          {% include "partials/form_field.html" with field=form.target_slot %}
+          <p class="help">Choosing a slot means the trained model can be deployed straight to every camera that uses it.</p>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <div class="upper">Architectures</div>
+        <dl class="kv" style="margin-top:var(--sp-3)">
+          <dt class="mono">campynet</dt><dd class="small">Image classifier — fire/smoke, PPE, object states.</dd>
+          <dt class="mono">campyface</dt><dd class="small">Identity embedding — face recognition without retraining per person.</dd>
+          <dt class="mono">campydet</dt><dd class="small">Grid detector — locate people and objects in the frame.</dd>
+          <dt class="mono">campydense</dt><dd class="small">Density map — count crowds where heads occlude each other.</dd>
+          <dt class="mono">campyseq</dt><dd class="small">Temporal model — actions that only make sense across frames.</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">Hyper-parameters</h2>
+          <span class="tiny dim">Defaults are sensible — change with intent</span></div>
+        <div class="card-body">
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.epochs %}
+            {% include "partials/form_field.html" with field=form.batch_size %}
+            {% include "partials/form_field.html" with field=form.learning_rate %}
+            {% include "partials/form_field.html" with field=form.optimizer %}
+            {% include "partials/form_field.html" with field=form.schedule %}
+            {% include "partials/form_field.html" with field=form.early_stopping_patience %}
+            {% include "partials/form_field.html" with field=form.width %}
+            {% include "partials/form_field.html" with field=form.depth %}
+            {% include "partials/form_field.html" with field=form.dropout %}
+            {% include "partials/form_field.html" with field=form.seed %}
+          </div>
+        </div>
+        <div class="card-foot row">
+          <button type="submit" class="btn btn-primary btn-lg">▶ Start training</button>
+          <a href="{% url 'dashboard:training_jobs' %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </div>
+      <div class="card card-pad" style="background:var(--accent-soft);border-color:var(--accent)">
+        <p class="small" style="margin:0">
+          Training runs on this server's CPU. A 96px classifier over a few hundred images typically
+          finishes in under a minute; you can watch the accuracy climb epoch by epoch.
+        </p>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

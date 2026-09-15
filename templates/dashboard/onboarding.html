@@ -1,0 +1,53 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Get started{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Let's get {{ current_organization.name }} watching</h1>
+  <p class="subtitle">Five steps. Most workspaces finish in under ten minutes.</p>
+</div>
+
+<div class="card card-pad" style="margin-bottom:var(--sp-5)">
+  <div class="row-between">
+    <span class="semibold">{{ completed }} of {{ steps|length }} complete</span>
+    <span class="small muted">{{ progress }}%</span>
+  </div>
+  <div class="meter meter-lg" style="margin-top:var(--sp-3)">
+    <div class="meter-fill ok" style="width:{{ progress }}%"></div>
+  </div>
+</div>
+
+<div class="stack">
+  {% for step in steps %}
+  <div class="card card-pad">
+    <div class="row-between">
+      <div class="row">
+        <span class="feature-icon" style="width:38px;height:38px;font-size:1rem;margin:0;{% if step.done %}background:var(--ok-soft);color:var(--ok){% endif %}" aria-hidden="true">
+          {% if step.done %}✓{% else %}{{ forloop.counter }}{% endif %}
+        </span>
+        <div>
+          <h3 style="margin:0;font-size:1.02rem">{{ step.title }}</h3>
+          <p class="small muted" style="margin:2px 0 0">{{ step.description }}</p>
+        </div>
+      </div>
+      {% if step.done %}
+        <span class="pill pill-ok">Done</span>
+      {% else %}
+        <a href="{% url step.url %}" class="btn btn-primary btn-sm">{{ step.cta }}</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card card-pad" style="margin-top:var(--sp-5);background:var(--accent-soft);border-color:var(--accent)">
+  <h3 style="font-size:1.02rem">No cameras to hand?</h3>
+  <p class="small" style="margin-bottom:var(--sp-4)">
+    Add a camera with the protocol set to <strong>Simulated (demo)</strong>. It plays a scripted
+    scene — a person walking, a crowd forming, a fire starting — so you can watch every detector
+    work and test your alert rules before touching real hardware.
+  </p>
+  {% if 'cameras.manage' in user_permissions %}
+    <a href="{% url 'dashboard:camera_create' %}" class="btn btn-primary btn-sm">Add a simulated camera</a>
+  {% endif %}
+</div>
+{% endblock %}

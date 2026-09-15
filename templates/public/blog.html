@@ -1,0 +1,50 @@
+{% extends "public/base.html" %}
+{% block title %}{% if category %}{{ category.name }} — {% elif tag %}{{ tag.name }} — {% endif %}Blog · {{ BRAND.name }}{% endblock %}
+{% block public_content %}
+<section class="hero" style="padding-bottom:var(--sp-4)">
+  <div class="container">
+    <span class="hero-eyebrow">Blog</span>
+    <h1>{% if category %}{{ category.name }}{% elif tag %}Tagged “{{ tag.name }}”{% else %}Notes on making cameras useful{% endif %}</h1>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container">
+    {% if categories %}
+    <div class="row" style="margin-bottom:var(--sp-5)">
+      <a href="{% url 'cms:blog' %}" class="chip {% if not category %}chip-active{% endif %}">All</a>
+      {% for item in categories %}
+        <a href="{{ item.get_absolute_url }}" class="chip {% if category.pk == item.pk %}chip-active{% endif %}">{{ item.name }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if posts %}
+    <div class="grid grid-3">
+      {% for post in posts %}
+      <article class="card card-hover" style="overflow:hidden">
+        {% if post.cover_image %}
+          <img src="{{ post.cover_image.url }}" alt="" style="aspect-ratio:16/9;object-fit:cover;width:100%">
+        {% else %}
+          <div style="aspect-ratio:16/9;background:linear-gradient(135deg,var(--indigo-600),var(--cyan-500))"></div>
+        {% endif %}
+        <div class="card-pad-sm">
+          {% if post.category %}<span class="pill pill-accent">{{ post.category.name }}</span>{% endif %}
+          <h3 style="font-size:1.05rem;margin-top:var(--sp-2)"><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h3>
+          <p class="small muted">{{ post.excerpt|truncatewords:22 }}</p>
+          <div class="tiny dim">{{ post.display_author }} · {{ post.published_at|date:"j M Y" }} · {{ post.reading_minutes }} min read</div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% include "partials/pagination.html" %}
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon" aria-hidden="true">✎</div>
+      <h3>Nothing published yet</h3>
+      <p>We are writing. Check back soon.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

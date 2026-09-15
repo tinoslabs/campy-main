@@ -1,0 +1,42 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Media library{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:admin_cms' %}">Website</a> <span>/</span> <span>Media</span></div>
+  <h1>Media library</h1>
+</div>
+<div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,2.4fr);gap:var(--sp-5);align-items:start">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.02rem">Upload</h2></div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% include "partials/form.html" %}
+        <button type="submit" class="btn btn-primary btn-block">Upload</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.02rem">Library</h2><span class="small dim">{{ assets|length }} assets</span></div>
+    <div class="card-body">
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px">
+        {% for asset in assets %}
+        <div>
+          {% if asset.kind == 'image' %}
+            <img src="{{ asset.file.url }}" alt="{{ asset.alt_text }}" loading="lazy"
+                 style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border)">
+          {% else %}
+            <div class="panel center" style="aspect-ratio:4/3;display:flex;align-items:center;justify-content:center">📄</div>
+          {% endif %}
+          <div class="tiny truncate" style="margin-top:4px">{{ asset.title }}</div>
+          <div class="copy-field" style="margin-top:3px">
+            <input type="text" class="input tiny" value="{{ asset.file.url }}" readonly id="asset-{{ asset.pk }}" style="padding:3px 6px">
+            <button class="btn btn-sm" data-copy="#asset-{{ asset.pk }}" style="padding:3px 8px">Copy</button>
+          </div>
+        </div>
+        {% empty %}<p class="small muted">Nothing uploaded yet.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

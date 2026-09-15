@@ -1,0 +1,70 @@
+{% extends "public/base.html" %}
+{% block title %}Features — {{ BRAND.name }}{% endblock %}
+{% block meta_description %}Every Campy AI capability explained: gesture tracking, face recognition, geofencing, crowd management, theft detection, dangerous objects and fire detection.{% endblock %}
+
+{% block public_content %}
+<section class="hero" style="padding-bottom:var(--sp-5)">
+  <div class="container container-narrow center">
+    <span class="hero-eyebrow">Capabilities</span>
+    <h1>What Campy AI sees</h1>
+    <p class="lead" style="margin-inline:auto">
+      Seven detectors, each solving a real workplace problem. Enable them per camera —
+      a loading bay needs different awareness from a server room.
+    </p>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="stack-lg">
+      {% for item in analytics %}
+      <div class="card card-pad" id="{{ item.key }}">
+        <div class="grid grid-2" style="align-items:start;gap:var(--sp-6)">
+          <div>
+            <div class="feature-icon" aria-hidden="true">{% if item.key == 'gesture' %}🚶{% elif item.key == 'face' %}☺{% elif item.key == 'geofence' %}⬡{% elif item.key == 'crowd' %}👥{% elif item.key == 'theft' %}🛡{% elif item.key == 'object' %}⚠{% else %}🔥{% endif %}</div>
+            <h2 style="font-size:1.3rem">{{ item.label }}</h2>
+            <p class="muted">{{ item.doc }}</p>
+            <p class="tiny dim mono">analytic key: {{ item.key }}</p>
+          </div>
+          <div class="panel">
+            <div class="upper" style="margin-bottom:var(--sp-3)">Tunable settings</div>
+            <dl class="kv">
+              {% for key, value in item.defaults.items %}
+                {% if key != 'enabled' %}
+                <dt class="mono tiny">{{ key }}</dt>
+                <dd class="mono tiny">{{ value }}</dd>
+                {% endif %}
+              {% endfor %}
+            </dl>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section section-dark">
+  <div class="container container-narrow center">
+    <h2>How it actually works</h2>
+    <div class="grid grid-3" style="margin-top:var(--sp-6);text-align:left">
+      <div>
+        <div class="feature-icon" aria-hidden="true">1</div>
+        <h3>Connect a stream</h3>
+        <p class="muted small">RTSP, ONVIF, HTTP/MJPEG or HLS — whatever your existing recorder already exposes.</p>
+      </div>
+      <div>
+        <div class="feature-icon" aria-hidden="true">2</div>
+        <h3>Draw your zones</h3>
+        <p class="muted small">Click points on the camera view to mark restricted areas, counting zones or stock shelves.</p>
+      </div>
+      <div>
+        <div class="feature-icon" aria-hidden="true">3</div>
+        <h3>Decide who gets told</h3>
+        <p class="muted small">Route by severity, camera, zone and time of day to email, Slack, Telegram, SMS or a webhook.</p>
+      </div>
+    </div>
+    <a href="{% url 'accounts:signup' %}" class="btn btn-primary btn-lg" style="margin-top:var(--sp-6)">Start free</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,105 @@
+# Campy AI — production-shaped stack.
+#
+#   docker compose -f deploy/docker-compose.yml up -d
+#   docker compose -f deploy/docker-compose.yml exec web python manage.py seed_demo
+#
+# Put a TLS terminator (Caddy, nginx, a cloud load balancer) in front of `web`.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: campyai
+      POSTGRES_USER: campyai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campyai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save 60 1 --appendonly no
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgres://campyai:${POSTGRES_PASSWORD}@db:5432/campyai
+      REDIS_URL: redis://redis:6379/0
+      CELERY_TASK_ALWAYS_EAGER: "False"
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    volumes:
+      - campy-data:/var/lib/campyai
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn campyai.wsgi:application --bind 0.0.0.0:8000
+             --workers 4 --timeout 120 --access-logfile - --error-logfile -"
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgres://campyai:${POSTGRES_PASSWORD}@db:5432/campyai
+      REDIS_URL: redis://redis:6379/0
+      CELERY_TASK_ALWAYS_EAGER: "False"
+    depends_on:
+      web: {condition: service_started}
+    volumes:
+      - campy-data:/var/lib/campyai
+    command: celery -A campyai worker -l info --concurrency 4
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgres://campyai:${POSTGRES_PASSWORD}@db:5432/campyai
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      web: {condition: service_started}
+    command: celery -A campyai beat -l info
+    restart: unless-stopped
+
+  # Camera analytics. Scale this out — one process per group of cameras.
+  cameras:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgres://campyai:${POSTGRES_PASSWORD}@db:5432/campyai
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      web: {condition: service_started}
+    volumes:
+      - campy-data:/var/lib/campyai
+    command: python manage.py run_camera --all --workers 8
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+  campy-data:

@@ -1,0 +1,37 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Security{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Security</h1><p class="subtitle">Your password and recent account activity.</p></div>
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.05rem">Change password</h2></div>
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "partials/form.html" %}
+        <button type="submit" class="btn btn-primary">Change password</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.05rem">Recent sign-in activity</h2></div>
+    <div class="card-body card-body-flush">
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>When</th><th>Event</th><th>IP address</th></tr></thead>
+          <tbody>
+            {% for entry in recent_activity %}
+            <tr>
+              <td class="nowrap small">{{ entry.created_at|date:"j M, H:i" }}</td>
+              <td>{% if entry.action == 'login' %}<span class="pill pill-ok">Signed in</span>{% else %}<span class="pill pill-bad">Failed attempt</span>{% endif %}</td>
+              <td class="mono tiny">{{ entry.ip_address|default:"—" }}</td>
+            </tr>
+            {% empty %}<tr><td colspan="3" class="center muted">No activity recorded yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

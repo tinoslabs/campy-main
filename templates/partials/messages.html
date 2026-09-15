@@ -1,0 +1,12 @@
+{% if messages %}
+<div class="stack-sm" style="margin-bottom:var(--sp-4)">
+  {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'success' %}success{% else %}info{% endif %}"
+         role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}"
+         data-autodismiss="{% if message.tags == 'error' %}0{% else %}7000{% endif %}">
+      <span aria-hidden="true">{% if message.tags == 'error' %}⚠{% elif message.tags == 'warning' %}!{% elif message.tags == 'success' %}✓{% else %}i{% endif %}</span>
+      <span>{{ message }}</span>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}

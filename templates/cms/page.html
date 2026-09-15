@@ -1,0 +1,32 @@
+{% extends "public/base.html" %}
+{% block title %}{{ page.meta_title }} · {{ BRAND.name }}{% endblock %}
+{% block meta_description %}{{ page.meta_description }}{% endblock %}
+{% block meta_extra %}
+  {% if page.no_index %}<meta name="robots" content="noindex">{% endif %}
+  {% if page.canonical_url %}<link rel="canonical" href="{{ page.canonical_url }}">{% endif %}
+  <meta property="og:title" content="{{ page.meta_title }}">
+  {% if page.og_image %}<meta property="og:image" content="{{ page.og_image.url }}">{% endif %}
+{% endblock %}
+
+{% block public_content %}
+{% if page.blocks.exists %}
+  {% for block in blocks %}{% include block.template_name with block=block %}{% endfor %}
+{% else %}
+<section class="section">
+  <div class="container {% if page.template == 'legal' %}container-narrow{% endif %}">
+    {% if page.breadcrumbs|length > 1 %}
+    <div class="breadcrumbs">
+      {% for crumb in page.breadcrumbs %}
+        {% if not forloop.last %}<a href="{{ crumb.get_absolute_url }}">{{ crumb.title }}</a><span>/</span>
+        {% else %}<span>{{ crumb.title }}</span>{% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+    <h1>{{ page.title }}</h1>
+    {% if page.excerpt %}<p class="lead">{{ page.excerpt }}</p>{% endif %}
+    {% if page.hero_image %}<img src="{{ page.hero_image.url }}" alt="" style="border-radius:var(--radius-lg);margin:var(--sp-5) 0">{% endif %}
+    <div style="font-size:1rem;line-height:1.75">{{ page.body|linebreaks }}</div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

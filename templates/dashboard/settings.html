@@ -1,0 +1,108 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Settings{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Workspace settings</h1><p class="subtitle">{{ organization.name }}</p></div>
+
+<div class="grid grid-2" style="align-items:start">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Organisation</h2>
+        {% if can_manage %}<a href="{% url 'accounts:organization_edit' %}" class="btn btn-sm">Edit</a>{% endif %}</div>
+      <div class="card-body">
+        <dl class="kv">
+          <dt>Name</dt><dd>{{ organization.name }}</dd>
+          <dt>Legal name</dt><dd>{{ organization.legal_name|default:"—" }}</dd>
+          <dt>Industry</dt><dd>{{ organization.get_industry_display }}</dd>
+          <dt>Address</dt><dd>{{ organization.address|default:"—" }}</dd>
+          <dt>Country</dt><dd>{{ organization.country }}</dd>
+          <dt>Tax ID</dt><dd class="mono">{{ organization.tax_id|default:"—" }}</dd>
+          <dt>Timezone</dt><dd>{{ organization.timezone }}</dd>
+          <dt>Status</dt><dd>{{ organization.status|status_pill }}</dd>
+          <dt>Created</dt><dd>{{ organization.created_at|date:"j F Y" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Privacy &amp; retention</h2></div>
+      <div class="card-body">
+        {% if can_manage %}
+        <form method="post" action="{% url 'dashboard:settings_privacy' %}">
+          {% csrf_token %}
+          <div class="switch-row">
+            <div>
+              <div class="semibold small">Pixelate unrecognised faces</div>
+              <div class="tiny dim">Applied to every stored snapshot, on every camera.</div>
+            </div>
+            <input type="checkbox" name="blur_unknown_faces" {% if organization.settings.blur_unknown_faces %}checked{% endif %}
+                   style="width:18px;height:18px;accent-color:var(--accent)">
+          </div>
+          <div class="switch-row">
+            <div>
+              <div class="semibold small">Store evidence snapshots</div>
+              <div class="tiny dim">Turn off to keep only the textual record of an event.</div>
+            </div>
+            <input type="checkbox" name="store_snapshots" {% if organization.settings.store_snapshots|default:True %}checked{% endif %}
+                   style="width:18px;height:18px;accent-color:var(--accent)">
+          </div>
+          <div class="switch-row">
+            <div>
+              <div class="semibold small">Anonymous analytics only</div>
+              <div class="tiny dim">Count people without ever attributing events to a named person.</div>
+            </div>
+            <input type="checkbox" name="anonymous_analytics" {% if organization.settings.anonymous_analytics %}checked{% endif %}
+                   style="width:18px;height:18px;accent-color:var(--accent)">
+          </div>
+          <button class="btn btn-primary" style="margin-top:var(--sp-4)">Save privacy settings</button>
+        </form>
+        {% else %}
+        <p class="small muted">You do not have permission to change these settings.</p>
+        {% endif %}
+
+        <div class="panel" style="margin-top:var(--sp-5)">
+          <div class="upper">Automatic retention</div>
+          <p class="small muted" style="margin:var(--sp-2) 0 0">
+            Events are deleted after <strong>{{ retention_days }} days</strong> and snapshots sooner,
+            enforced by a scheduled job. Holding identifiable footage beyond your stated period is
+            exactly what privacy regulators penalise.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Plan usage</h2>
+        {% if 'billing.view' in user_permissions %}<a href="{% url 'billing:overview' %}" class="btn btn-sm">Billing →</a>{% endif %}</div>
+      <div class="card-body">
+        {% for key, row in quotas.items %}
+        <div style="margin-bottom:var(--sp-4)">
+          <div class="row-between small">
+            <span>{{ key|title }}</span>
+            <span class="numeric semibold">{{ row.used }} {% if row.unlimited %}<span class="dim">/ unlimited</span>{% else %}/ {{ row.limit }}{% endif %}</span>
+          </div>
+          {% if not row.unlimited %}
+          <div class="meter" style="margin-top:4px">
+            <div class="meter-fill {% if row.exceeded %}bad{% elif row.near_limit %}warn{% else %}ok{% endif %}" style="width:{{ row.percent }}%"></div>
+          </div>
+          {% endif %}
+        </div>
+        {% empty %}<p class="small muted">No active package.</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="upper">Quick links</div>
+      <div class="stack-sm" style="margin-top:var(--sp-3)">
+        {% if 'people.view' in user_permissions %}<a href="{% url 'dashboard:team' %}" class="small">Team &amp; roles →</a>{% endif %}
+        {% if 'api.view' in user_permissions %}<a href="{% url 'dashboard:api_keys' %}" class="small">API keys &amp; webhooks →</a>{% endif %}
+        {% if 'audit.view' in user_permissions %}<a href="{% url 'dashboard:audit' %}" class="small">Audit log →</a>{% endif %}
+        {% if 'alerts.view' in user_permissions %}<a href="{% url 'dashboard:alert_rules' %}" class="small">Alert rules →</a>{% endif %}
+        <a href="{% url 'accounts:profile' %}" class="small">Your profile →</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

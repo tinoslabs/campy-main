@@ -1,0 +1,60 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}API keys{% endblock %}
+{% block topbar_actions %}{% if can_manage and api_enabled %}<a href="{% url 'dashboard:api_key_create' %}" class="btn btn-sm btn-primary">＋ New key</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>API &amp; integrations</h1><p class="subtitle">Server-to-server credentials for edge devices and your own systems.</p></div>
+
+{% if not api_enabled %}
+<div class="alert alert-info"><span aria-hidden="true">i</span>
+  <div><strong>API access is not in your current package.</strong> Existing keys keep working; new ones need an upgrade.
+    <a href="{% url 'billing:packages' %}">Compare plans →</a></div></div>
+{% endif %}
+
+<div class="card" style="margin-bottom:var(--sp-5)">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Key</th><th>Scopes</th><th>Created</th><th>Last used</th><th>Requests</th><th>Status</th><th class="right"></th></tr></thead>
+      <tbody>
+        {% for key in keys %}
+        <tr>
+          <td><span class="semibold">{{ key.name }}</span><div class="mono tiny dim">{{ key.prefix }}·••••••••</div></td>
+          <td class="small">{{ key.scopes|length }} permission{{ key.scopes|length|pluralize }}</td>
+          <td class="small nowrap">{{ key.created_at|date:"j M Y" }}<div class="tiny dim">{{ key.created_by.get_short_name|default:"—" }}</div></td>
+          <td class="small nowrap">{{ key.last_used_at|ago }}</td>
+          <td class="numeric small">{{ key.request_count }}</td>
+          <td>{% if key.is_active %}<span class="pill pill-ok">Active</span>{% else %}<span class="pill pill-bad">Revoked</span>{% endif %}</td>
+          <td class="actions">
+            {% if can_manage and key.is_active %}
+            <form method="post" action="{% url 'dashboard:api_key_revoke' key.uid %}" style="display:inline"
+                  data-confirm="Revoke '{{ key.name }}'? Anything using it stops working immediately.">
+              {% csrf_token %}<button class="btn btn-sm btn-ghost" style="color:var(--bad)">Revoke</button></form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty">
+          <div class="empty-icon" aria-hidden="true">⚿</div><h3>No API keys yet</h3>
+          <p>Issue a key to pull events into your own systems or push frames from an edge device.</p>
+          {% if can_manage and api_enabled %}<a href="{% url 'dashboard:api_key_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Create a key</a>{% endif %}
+        </div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2 style="font-size:1.05rem">Using the API</h2>
+    <a href="/api/v1/docs/" class="btn btn-sm">Open API docs →</a></div>
+  <div class="card-body">
+    <p class="small muted">Authenticate with the <code>Api-Key</code> scheme. Keys are workspace-scoped, and each one carries only the permissions you grant it.</p>
+    <div class="code-block">curl {{ request.scheme }}://{{ request.get_host }}/api/v1/events/ \
+  -H "Authorization: Api-Key cai_xxxxxxxx.your-secret-here"</div>
+    <p class="small muted" style="margin-top:var(--sp-4)">
+      Webhooks are configured as notification channels under
+      <a href="{% url 'dashboard:alert_rules' %}">Alert rules</a>. Set a shared secret there and
+      every delivery carries an <code>X-Campy-Signature</code> HMAC header you can verify.
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "public/base.html" %}
+{% block title %}Thank you — {{ BRAND.name }}{% endblock %}
+{% block public_content %}
+<section class="section">
+  <div class="container container-narrow center">
+    <div class="feature-icon" style="margin:0 auto var(--sp-4);width:60px;height:60px;font-size:1.7rem" aria-hidden="true">✓</div>
+    <h1>Message received</h1>
+    <p class="lead">Thanks for getting in touch. We will reply within one working day.</p>
+    <p class="muted">In the meantime, you can start a free trial and have a camera running in minutes.</p>
+    <div class="row" style="justify-content:center;margin-top:var(--sp-5)">
+      <a href="{% url 'accounts:signup' %}" class="btn btn-primary btn-lg">Start free trial</a>
+      <a href="{% url 'cms:home' %}" class="btn btn-lg">Back to home</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

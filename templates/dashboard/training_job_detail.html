@@ -1,0 +1,219 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}{{ job.name }}{% endblock %}
+{% block topbar_actions %}
+{% if job.is_running and can_run %}
+  <form method="post" action="{% url 'dashboard:training_job_cancel' job.uid %}" data-confirm="Cancel this training run?">
+    {% csrf_token %}<button class="btn btn-sm" style="color:var(--bad)">Cancel run</button></form>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:training_jobs' %}">Training</a> <span>/</span> <span>{{ job.name }}</span></div>
+  <div class="row-between">
+    <div>
+      <div class="row row-tight">{{ job.status|status_pill }}
+        <span class="pill pill-muted">{{ job.architecture }}</span>
+        <span class="small dim">on {{ job.dataset.name }}</span></div>
+      <h1 style="margin-top:var(--sp-2)">{{ job.name }}</h1>
+      <p class="subtitle" id="job-subtitle">Epoch {{ job.current_epoch }} of {{ job.epochs }} · {{ job.duration_seconds|duration }}</p>
+    </div>
+  </div>
+</div>
+
+{% if job.error_message %}
+<div class="alert alert-error"><span aria-hidden="true">⚠</span><div><strong>Training failed.</strong> {{ job.error_message }}</div></div>
+{% endif %}
+
+<div class="card card-pad" style="margin-bottom:var(--sp-5)">
+  <div class="row-between">
+    <span class="semibold" id="job-progress-label">{{ job.progress|floatformat:0 }}% complete</span>
+    <span class="small muted">{{ job.get_status_display }}</span>
+  </div>
+  <div class="meter meter-lg" style="margin-top:var(--sp-3)">
+    <div class="meter-fill {% if job.status == 'failed' %}bad{% elif job.status == 'succeeded' %}ok{% endif %}"
+         id="job-progress-bar" style="width:{{ job.progress }}%"></div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Learning curve</h2>
+        <div class="chart-legend">
+          <span><span class="chart-swatch" style="background:var(--accent)"></span>Training</span>
+          <span><span class="chart-swatch" style="background:var(--cyan-500)"></span>Validation</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <svg id="training-chart" viewBox="0 0 320 140" class="chart" style="height:220px" role="img" aria-label="Accuracy per epoch">
+          <g class="chart-grid">
+            <line x1="0" y1="20" x2="320" y2="20"/><line x1="0" y1="55" x2="320" y2="55"/>
+            <line x1="0" y1="90" x2="320" y2="90"/><line x1="0" y1="125" x2="320" y2="125"/>
+          </g>
+          <polyline id="chart-train" class="chart-line" points="" vector-effect="non-scaling-stroke"/>
+          <polyline id="chart-val" class="chart-line chart-line-2" points="" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <div class="row-between tiny dim"><span>epoch 1</span><span id="chart-last-epoch">epoch {{ job.epochs }}</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Epoch log</h2></div>
+      <div class="table-wrap" style="max-height:340px;overflow-y:auto">
+        <table class="data" id="epoch-table">
+          <thead><tr><th>Epoch</th><th>Loss</th><th>Val loss</th><th>Train acc</th><th>Val acc</th><th>LR</th><th>Time</th></tr></thead>
+          <tbody>
+            {% for row in job.history %}
+            <tr>
+              <td class="numeric">{{ row.epoch }}</td>
+              <td class="numeric mono tiny">{{ row.loss }}</td>
+              <td class="numeric mono tiny">{{ row.val_loss|default:"—" }}</td>
+              <td class="numeric mono tiny">{% firstof row.train_accuracy row.train_rank1 "—" %}</td>
+              <td class="numeric mono tiny">{% firstof row.val_accuracy row.val_rank1 "—" %}</td>
+              <td class="numeric mono tiny">{{ row.lr }}</td>
+              <td class="numeric mono tiny">{{ row.seconds }}s</td>
+            </tr>
+            {% empty %}<tr><td colspan="7" class="center muted">Waiting for the first epoch…</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if per_class %}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Per-class performance</h2>
+        <span class="tiny dim">Where the model actually struggles</span></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr></thead>
+          <tbody>
+            {% for row in per_class %}
+            <tr>
+              <td class="semibold">{{ row.class }}</td>
+              <td class="numeric">{{ row.precision|pct }}</td>
+              <td class="numeric">{{ row.recall|pct }}</td>
+              <td class="numeric">{{ row.f1|pct }}</td>
+              <td class="numeric">{{ row.support }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Run log</h2></div>
+      <div class="card-body card-body-flush">
+        <pre class="code-block" id="job-log" style="max-height:280px;overflow:auto;margin:0;border-radius:0">{{ job.log|default:"Waiting for output…" }}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card card-pad">
+      <div class="upper">Configuration</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        <dt>Dataset</dt><dd><a href="{{ job.dataset.get_absolute_url }}">{{ job.dataset.name }}</a></dd>
+        <dt>Classes</dt><dd class="numeric">{{ job.dataset.class_count }}</dd>
+        <dt>Epochs</dt><dd class="numeric">{{ job.epochs }}</dd>
+        <dt>Batch size</dt><dd class="numeric">{{ job.batch_size }}</dd>
+        <dt>Optimiser</dt><dd>{{ job.get_optimizer_display }}</dd>
+        <dt>Learning rate</dt><dd class="mono">{{ job.learning_rate }}</dd>
+        <dt>Schedule</dt><dd>{{ job.get_schedule_display }}</dd>
+        <dt>Width × depth</dt><dd class="numeric">{{ job.width }} × {{ job.depth }}</dd>
+        <dt>Seed</dt><dd class="mono">{{ job.seed }}</dd>
+      </dl>
+    </div>
+
+    {% if job.metrics %}
+    <div class="card card-pad">
+      <div class="upper">Final evaluation</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        {% for key, value in job.metrics.items %}
+          {% if key != 'per_class' %}<dt class="mono tiny">{{ key }}</dt><dd class="mono tiny">{{ value }}</dd>{% endif %}
+        {% endfor %}
+      </dl>
+    </div>
+    {% endif %}
+
+    {% for version in versions %}
+    <div class="card card-pad" style="border-color:var(--accent)">
+      <div class="upper" style="color:var(--accent)">Model produced</div>
+      <h3 style="font-size:1rem;margin-top:var(--sp-2)"><a href="{{ version.get_absolute_url }}">{{ version.name }} v{{ version.version }}</a></h3>
+      <dl class="kv small" style="margin-top:var(--sp-3)">
+        <dt>Accuracy</dt><dd class="numeric">{{ version.accuracy|pct }}</dd>
+        <dt>Parameters</dt><dd class="numeric">{{ version.parameter_count|intcomma }}</dd>
+        <dt>File size</dt><dd>{{ version.size_label }}</dd>
+        <dt>Inference</dt><dd class="numeric">{{ version.inference_ms|floatformat:1 }} ms</dd>
+      </dl>
+      {% if can_deploy and not version.is_deployed %}
+      <form method="post" action="{% url 'dashboard:model_deploy' version.uid %}" style="margin-top:var(--sp-3)">
+        {% csrf_token %}<button class="btn btn-primary btn-block">Deploy to production</button>
+      </form>
+      {% elif version.is_deployed %}
+        <span class="pill pill-ok" style="margin-top:var(--sp-3)">Deployed</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if job.is_running %}
+<script>
+(function(){
+  var url = "{% url 'dashboard:training_job_progress' job.uid %}";
+  function points(values, maxEpochs){
+    var pts = [];
+    values.forEach(function(v, i){
+      if (v === null || v === undefined) return;
+      var x = (i / Math.max(maxEpochs - 1, 1)) * 320;
+      var y = 130 - Math.max(0, Math.min(1, v)) * 120;
+      pts.push(x.toFixed(1) + ',' + y.toFixed(1));
+    });
+    return pts.join(' ');
+  }
+  function tick(){
+    fetch(url, {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'})
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        document.getElementById('job-progress-bar').style.width = data.progress + '%';
+        document.getElementById('job-progress-label').textContent = Math.round(data.progress) + '% complete';
+        document.getElementById('job-subtitle').textContent = 'Epoch ' + data.epoch + ' of ' + data.epochs;
+        document.getElementById('job-log').textContent = data.log;
+
+        var train = data.history.map(function(r){ return r.train_accuracy != null ? r.train_accuracy : r.train_rank1; });
+        var val = data.history.map(function(r){ return r.val_accuracy != null ? r.val_accuracy : r.val_rank1; });
+        document.getElementById('chart-train').setAttribute('points', points(train, data.epochs));
+        document.getElementById('chart-val').setAttribute('points', points(val, data.epochs));
+
+        if (data.finished) { setTimeout(function(){ location.reload(); }, 1200); }
+        else { setTimeout(tick, 2500); }
+      })
+      .catch(function(){ setTimeout(tick, 6000); });
+  }
+  tick();
+})();
+</script>
+{% else %}
+<script>
+(function(){
+  var history = {{ chart.epochs|json_script_safe }};
+  var train = {{ chart.train_accuracy|json_script_safe }};
+  var val = {{ chart.val_accuracy|json_script_safe }};
+  var total = Math.max(history.length, 2);
+  function points(values){
+    var pts = [];
+    values.forEach(function(v, i){
+      if (v === null || v === undefined) return;
+      pts.push(((i/(total-1))*320).toFixed(1) + ',' + (130 - Math.max(0, Math.min(1, v))*120).toFixed(1));
+    });
+    return pts.join(' ');
+  }
+  document.getElementById('chart-train').setAttribute('points', points(train));
+  document.getElementById('chart-val').setAttribute('points', points(val));
+})();
+</script>
+{% endif %}
+{% endblock %}

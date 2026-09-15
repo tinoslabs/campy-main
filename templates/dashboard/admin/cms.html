@@ -1,0 +1,68 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Website CMS{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Website content</h1><p class="subtitle">Everything on the public campy.ai site.</p></div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-5)">
+  <a href="{% url 'cms:cms_pages' %}" class="stat card-hover" style="text-decoration:none">
+    <div class="stat-label">Pages</div><div class="stat-value">{{ pages|length }}</div><div class="stat-meta">Manage →</div></a>
+  <a href="{% url 'cms:cms_posts' %}" class="stat card-hover" style="text-decoration:none">
+    <div class="stat-label">Blog posts</div><div class="stat-value">{{ posts|length }}</div><div class="stat-meta">Manage →</div></a>
+  <a href="{% url 'cms:cms_leads' %}" class="stat card-hover" style="text-decoration:none">
+    <div class="stat-label">New leads</div><div class="stat-value" style="color:{% if new_leads %}var(--warn){% endif %}">{{ new_leads }}</div><div class="stat-meta">Follow up →</div></a>
+  <a href="{% url 'cms:cms_media' %}" class="stat card-hover" style="text-decoration:none">
+    <div class="stat-label">Media assets</div><div class="stat-value">{{ media_count }}</div><div class="stat-meta">Library →</div></a>
+</div>
+
+<div class="grid grid-2" style="align-items:start">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.02rem">Pages</h2>
+      <a href="{% url 'cms:cms_page_create' %}" class="btn btn-sm btn-primary">＋ New page</a></div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Title</th><th>URL</th><th>Status</th><th class="right"></th></tr></thead>
+        <tbody>
+          {% for page in pages %}
+          <tr>
+            <td><a href="{% url 'cms:cms_page_edit' page.pk %}" class="semibold">{{ page.title }}</a>
+              {% if page.is_homepage %}<span class="pill pill-accent tiny">Home</span>{% endif %}</td>
+            <td class="mono tiny dim">/{{ page.slug }}/</td>
+            <td>{{ page.status|status_pill }}</td>
+            <td class="actions"><a href="{{ page.get_absolute_url }}" class="btn btn-sm btn-ghost" target="_blank" rel="noopener">View</a></td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="center muted" style="padding:var(--sp-5)">No pages yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Latest leads</h2>
+        <a href="{% url 'cms:cms_leads' %}" class="small">All →</a></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Name</th><th>Company</th><th>Source</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for lead in leads %}
+            <tr><td class="small">{{ lead.name }}<div class="tiny dim">{{ lead.email }}</div></td>
+              <td class="small">{{ lead.company|default:"—" }}</td>
+              <td><span class="pill pill-muted">{{ lead.get_source_display }}</span></td>
+              <td>{{ lead.status|status_pill }}</td></tr>
+            {% empty %}<tr><td colspan="4" class="center muted">No enquiries yet.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card card-pad">
+      <div class="upper">Other content</div>
+      <div class="stack-sm" style="margin-top:var(--sp-3)">
+        <a href="{% url 'cms:cms_faqs' %}" class="small">FAQs ({{ faqs }}) →</a>
+        <a href="{% url 'cms:cms_testimonials' %}" class="small">Testimonials ({{ testimonials }}) →</a>
+        <a href="{% url 'cms:cms_menus' %}" class="small">Navigation menus →</a>
+        <a href="{% url 'cms:cms_settings' %}" class="small">Site settings &amp; branding →</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

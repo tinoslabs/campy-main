@@ -1,0 +1,130 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Events{% endblock %}
+{% block topbar_actions %}
+{% if 'events.export' in user_permissions %}
+  <a href="{% url 'dashboard:analysis_report' %}?analytics={{ form.analytic.value|default:'' }}&amp;days={{ form.days.value|default:30 }}"
+     class="btn btn-sm btn-primary" title="A report on what is shown here, with evidence frames">⤓ Report (PDF)</a>
+  <a href="{% url 'dashboard:events_export' %}{% querystring %}" class="btn btn-sm">⤓ Export CSV</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Events</h1>
+  <p class="subtitle">{{ total|intcomma }} event{{ total|pluralize }} match your filters</p>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-4)">
+  <div class="stat"><div class="stat-label">Critical</div><div class="stat-value" style="color:var(--crit)">{{ severity_counts.critical|default:0 }}</div></div>
+  <div class="stat"><div class="stat-label">High</div><div class="stat-value" style="color:var(--bad)">{{ severity_counts.high|default:0 }}</div></div>
+  <div class="stat"><div class="stat-label">Medium</div><div class="stat-value" style="color:var(--warn)">{{ severity_counts.medium|default:0 }}</div></div>
+  <div class="stat"><div class="stat-label">Low / info</div><div class="stat-value">{{ low_info_count }}</div></div>
+</div>
+
+<form method="get" class="toolbar">
+  {{ form.q }}
+  {{ form.severity }}
+  {{ form.analytic }}
+  {{ form.status }}
+  {{ form.camera }}
+  {{ form.days }}
+  <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+  <a href="{% url 'dashboard:events' %}" class="btn btn-ghost btn-sm">Reset</a>
+</form>
+
+<form method="post" action="{% url 'dashboard:events_bulk' %}" id="bulk-form">
+{% csrf_token %}
+<div class="card">
+  <div class="card-head">
+    <div class="row row-tight">
+      <label class="check" style="margin:0"><input type="checkbox" id="select-all-events"><span class="small">Select all</span></label>
+      <span class="small dim" id="selected-count"></span>
+    </div>
+    {% if 'events.acknowledge' in user_permissions %}
+    <div class="row row-tight">
+      <select name="bulk_action" class="input" style="width:auto">
+        <option value="acknowledge">Acknowledge</option>
+        {% if 'events.resolve' in user_permissions %}
+          <option value="resolve">Resolve</option>
+          <option value="false_positive">Mark false alarm</option>
+        {% endif %}
+      </select>
+      <button type="submit" class="btn btn-sm">Apply to selected</button>
+    </div>
+    {% endif %}
+  </div>
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th style="width:34px"></th>
+          <th>Event</th><th>Severity</th><th>Camera</th><th>When</th><th>Status</th><th class="right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+        <tr>
+          <td><input type="checkbox" name="event_uids" value="{{ event.uid }}" class="event-check"></td>
+          <td>
+            <a href="{{ event.get_absolute_url }}" class="semibold">{{ event.title }}</a>
+            <div class="tiny dim">
+              {{ event.analytic_label }}
+              {% if event.zone %}· {{ event.zone.name }}{% endif %}
+              {% if event.employee %}· {{ event.employee.full_name }}{% endif %}
+              {% if event.occurrence_count > 1 %}· seen {{ event.occurrence_count }}×{% endif %}
+            </div>
+          </td>
+          <td>{{ event.severity|severity_badge }}</td>
+          <td class="small">{{ event.camera.name|default:"—" }}<div class="tiny dim">{{ event.camera.site.name|default:"" }}</div></td>
+          <td class="nowrap small">{{ event.occurred_at|date:"j M, H:i" }}<div class="tiny dim">{{ event.occurred_at|ago }}</div></td>
+          <td>{{ event.status|status_pill }}</td>
+          <td class="actions">
+            {% if event.is_open and 'events.acknowledge' in user_permissions %}
+              <button form="ack-{{ event.uid }}" type="submit" class="btn btn-sm">Acknowledge</button>
+            {% endif %}
+            <a href="{{ event.get_absolute_url }}" class="btn btn-sm btn-ghost">Open</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">
+          <div class="empty">
+            <div class="empty-icon" aria-hidden="true">✓</div>
+            <h3>No events match</h3>
+            <p>Either everything is quiet, or your filters are too narrow.</p>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+</form>
+
+{# Per-row acknowledge forms live outside the bulk form to avoid nesting. #}
+{% for event in events %}
+  {% if event.is_open and 'events.acknowledge' in user_permissions %}
+  <form id="ack-{{ event.uid }}" method="post" action="{% url 'dashboard:event_action' event.uid 'acknowledge' %}" hidden>
+    {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+  </form>
+  {% endif %}
+{% endfor %}
+
+{% include "partials/pagination.html" %}
+
+<script>
+(function(){
+  var master = document.getElementById('select-all-events');
+  var boxes = document.querySelectorAll('.event-check');
+  var counter = document.getElementById('selected-count');
+  function sync(){
+    var n = document.querySelectorAll('.event-check:checked').length;
+    counter.textContent = n ? n + ' selected' : '';
+  }
+  if (master) master.addEventListener('change', function(){
+    boxes.forEach(function(b){ b.checked = master.checked; }); sync();
+  });
+  boxes.forEach(function(b){ b.addEventListener('change', sync); });
+})();
+</script>
+{% endblock %}

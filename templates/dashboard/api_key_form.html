@@ -1,0 +1,29 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}New API key{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:api_keys' %}">API keys</a> <span>/</span> <span>New</span></div>
+  <h1>Create an API key</h1>
+  <p class="subtitle">Grant only what the integration actually needs — the key can do nothing else.</p>
+</div>
+<div class="card" style="max-width:760px">
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_field.html" with field=form.name %}
+      {% include "partials/form_field.html" with field=form.expires_in_days %}
+      <fieldset>
+        <legend>Permissions</legend>
+        {% if form.scopes.errors %}<div class="alert alert-error">{{ form.scopes.errors }}</div>{% endif %}
+        <div class="grid grid-2">
+          {% for choice in form.scopes %}<label class="check">{{ choice.tag }}<span class="tiny">{{ choice.choice_label }}</span></label>{% endfor %}
+        </div>
+      </fieldset>
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Create key</button>
+        <a href="{% url 'dashboard:api_keys' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Notifications{% endblock %}
+{% block content %}
+<div class="page-head row-between">
+  <div><h1>Notifications</h1><p class="subtitle">Alerts sent to you.</p></div>
+  <form method="post">{% csrf_token %}<button class="btn btn-sm">Mark all read</button></form>
+</div>
+<div class="card">
+  <div class="card-body">
+    <div class="feed">
+      {% for item in notifications %}
+      <div class="feed-item" style="{% if not item.read_at %}background:var(--accent-soft);margin:0 -14px;padding-inline:14px;border-radius:var(--radius-sm){% endif %}">
+        <span class="feed-marker" style="background:{% if item.is_escalation %}var(--crit){% else %}var(--accent){% endif %}"></span>
+        <div class="feed-body">
+          <div class="feed-title">
+            {% if item.event %}<a href="{{ item.event.get_absolute_url }}">{{ item.subject }}</a>{% else %}{{ item.subject }}{% endif %}
+            {% if item.is_escalation %}<span class="pill pill-bad">Escalated</span>{% endif %}
+          </div>
+          <p class="small muted" style="margin:2px 0">{{ item.body|truncatechars:160 }}</p>
+          <div class="feed-meta tiny">{{ item.channel.name }} · {{ item.created_at|ago }}</div>
+        </div>
+        {{ item.status|status_pill }}
+      </div>
+      {% empty %}
+      <div class="empty"><div class="empty-icon" aria-hidden="true">✉</div><h3>Nothing here</h3>
+        <p>Notifications from alert rules that name you will appear here.</p></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

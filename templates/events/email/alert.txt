@@ -1,0 +1,16 @@
+{{ payload.severity|upper }} ALERT — {{ event.title }}
+
+{{ event.description }}
+
+Camera:     {{ payload.camera|default:"—" }}
+Site:       {{ payload.site|default:"—" }}
+Zone:       {{ payload.zone|default:"—" }}
+Analytic:   {{ event.analytic_label }}
+Confidence: {{ payload.confidence }}
+Time:       {{ event.occurred_at }}
+{% if payload.incident %}Incident:   {{ payload.incident }}{% endif %}
+
+Reference: {{ payload.id }}
+
+—
+{{ brand }} · This alert was generated automatically. Review the footage before acting on it.

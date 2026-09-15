@@ -1,0 +1,92 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{{ incident.reference }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:incidents' %}">Incidents</a> <span>/</span> <span>{{ incident.reference }}</span></div>
+  <div class="row-between">
+    <div>
+      <div class="row row-tight">{{ incident.severity|severity_badge }}{{ incident.status|status_pill }}
+        <span class="mono small dim">{{ incident.reference }}</span></div>
+      <h1 style="margin-top:var(--sp-2)">{{ incident.title }}</h1>
+      <p class="subtitle">
+        {{ incident.event_count }} event{{ incident.event_count|pluralize }} over {{ incident.duration_seconds|duration }}
+        · started {{ incident.started_at|date:"j M Y, H:i" }}
+      </p>
+    </div>
+    {% if incident.is_open and 'events.resolve' in user_permissions %}
+    <form method="post" action="{% url 'dashboard:incident_action' incident.uid 'resolve' %}">
+      {% csrf_token %}<button class="btn btn-primary">Resolve incident</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.05rem">Timeline</h2></div>
+    <div class="card-body">
+      <div class="feed">
+        {% for event in events %}
+        <div class="feed-item">
+          <span class="feed-marker" style="background:{% if event.severity == 'critical' %}var(--crit){% elif event.severity == 'high' %}var(--bad){% elif event.severity == 'medium' %}var(--warn){% else %}var(--info){% endif %}"></span>
+          {% if event.snapshot and event.snapshot.image %}
+            <img src="{{ event.snapshot.image.url }}" alt="" class="feed-thumb">
+          {% endif %}
+          <div class="feed-body">
+            <div class="feed-title"><a href="{{ event.get_absolute_url }}">{{ event.title }}</a></div>
+            <p class="small muted" style="margin:3px 0">{{ event.description|truncatechars:150 }}</p>
+            <div class="feed-meta">
+              <span class="mono">{{ event.occurred_at|date:"H:i:s" }}</span>
+              <span>· {{ event.analytic_label }}</span>
+              {% if event.zone %}<span>· {{ event.zone.name }}</span>{% endif %}
+              <span>· {{ event.confidence|pct }} confidence</span>
+            </div>
+          </div>
+          {{ event.severity|severity_badge }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card card-pad">
+      <div class="upper">Details</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        <dt>Site</dt><dd>{{ incident.site.name|default:"—" }}</dd>
+        <dt>Camera</dt><dd>{{ incident.primary_camera.name|default:"—" }}</dd>
+        <dt>Duration</dt><dd>{{ incident.duration_seconds|duration }}</dd>
+        <dt>Escalations</dt><dd class="numeric">{{ incident.escalation_level }}</dd>
+        <dt>Assigned</dt><dd>{{ incident.assigned_to.get_full_name|default:"Nobody" }}</dd>
+      </dl>
+    </div>
+
+    {% if 'events.resolve' in user_permissions and incident.is_open %}
+    <div class="card card-pad">
+      <div class="upper">Assign</div>
+      <form method="post" action="{% url 'dashboard:incident_action' incident.uid 'assign' %}" style="margin-top:var(--sp-3)">
+        {% csrf_token %}
+        <select name="assigned_to" class="input">
+          <option value="">— Select a person —</option>
+          {% for membership in team %}
+            <option value="{{ membership.user.pk }}" {% if incident.assigned_to_id == membership.user.pk %}selected{% endif %}>
+              {{ membership.user.get_full_name }} ({{ membership.role.name }})
+            </option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-block" style="margin-top:var(--sp-3)">Assign &amp; investigate</button>
+      </form>
+    </div>
+
+    <div class="card card-pad">
+      <div class="upper">Resolve</div>
+      <form method="post" action="{% url 'dashboard:incident_action' incident.uid 'resolve' %}" style="margin-top:var(--sp-3)">
+        {% csrf_token %}
+        <textarea name="note" class="input" rows="3" placeholder="What was found, and what was done?"></textarea>
+        <button class="btn btn-primary btn-block" style="margin-top:var(--sp-3)">Resolve &amp; close events</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

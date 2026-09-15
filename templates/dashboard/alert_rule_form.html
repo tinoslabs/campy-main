@@ -1,0 +1,91 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if rule %}Edit rule{% else %}New rule{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:alert_rules' %}">Alerting</a> <span>/</span> <span>{% if rule %}{{ rule.name }}{% else %}New rule{% endif %}</span></div>
+  <h1>{% if rule %}Edit “{{ rule.name }}”{% else %}Create an alert rule{% endif %}</h1>
+  <p class="subtitle">A rule decides which findings become notifications, and where they go.</p>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="grid grid-2" style="align-items:start">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">1 · What to match</h2></div>
+        <div class="card-body">
+          {% include "partials/form_field.html" with field=form.name %}
+          {% include "partials/form_field.html" with field=form.description %}
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.min_severity %}
+            {% include "partials/form_field.html" with field=form.min_confidence %}
+          </div>
+          <fieldset>
+            <legend>Analytics</legend>
+            <div class="grid grid-2">{% for choice in form.analytics %}<label class="check">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>{% endfor %}</div>
+          </fieldset>
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.sites %}
+            {% include "partials/form_field.html" with field=form.cameras %}
+          </div>
+          {% include "partials/form_field.html" with field=form.zones %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">2 · When it applies</h2></div>
+        <div class="card-body">
+          <fieldset>
+            <legend>Only on these days</legend>
+            <div class="row">{% for choice in form.schedule_days %}<label class="check" style="margin:0">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>{% endfor %}</div>
+          </fieldset>
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.schedule_from %}
+            {% include "partials/form_field.html" with field=form.schedule_to %}
+          </div>
+          <p class="help">Leave blank to arm the rule around the clock. A window that crosses midnight (e.g. 18:00 → 07:00) is handled correctly.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">3 · Who to tell</h2></div>
+        <div class="card-body">
+          <fieldset>
+            <legend>Channels</legend>
+            {% for choice in form.channels %}<label class="check">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>{% empty %}
+              <p class="small muted">No channels yet. <a href="{% url 'dashboard:channel_create' %}">Add one →</a></p>{% endfor %}
+          </fieldset>
+          {% include "partials/form_field.html" with field=form.recipients %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2 style="font-size:1.02rem">4 · Noise control &amp; escalation</h2></div>
+        <div class="card-body">
+          <div class="form-grid">
+            {% include "partials/form_field.html" with field=form.cooldown_seconds %}
+            {% include "partials/form_field.html" with field=form.threshold_count %}
+            {% include "partials/form_field.html" with field=form.threshold_window_seconds %}
+            {% include "partials/form_field.html" with field=form.escalate_after_seconds %}
+          </div>
+          <fieldset>
+            <legend>Escalate to</legend>
+            {% for choice in form.escalation_channels %}<label class="check">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>{% endfor %}
+          </fieldset>
+          {% include "partials/form_field.html" with field=form.create_incident %}
+          {% include "partials/form_field.html" with field=form.auto_acknowledge %}
+          {% include "partials/form_field.html" with field=form.is_active %}
+          {% include "partials/form_field.html" with field=form.priority %}
+        </div>
+        <div class="card-foot row">
+          <button type="submit" class="btn btn-primary">Save rule</button>
+          <a href="{% url 'dashboard:alert_rules' %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "public/base.html" %}
+{% block title %}FAQ — {{ BRAND.name }}{% endblock %}
+{% block public_content %}
+<section class="hero" style="padding-bottom:var(--sp-4)">
+  <div class="container container-narrow center">
+    <span class="hero-eyebrow">Answers</span>
+    <h1>Frequently asked questions</h1>
+  </div>
+</section>
+<section class="section" style="padding-top:0">
+  <div class="container container-narrow">
+    {% for group, items in grouped.items %}
+      <h2 style="margin-top:var(--sp-6)">{{ group }}</h2>
+      <div class="stack-sm">
+        {% for faq in items %}
+        <details class="card card-pad">
+          <summary class="semibold" style="cursor:pointer">{{ faq.question }}</summary>
+          <p class="muted small" style="margin:var(--sp-3) 0 0">{{ faq.answer|linebreaksbr }}</p>
+        </details>
+        {% endfor %}
+      </div>
+    {% empty %}
+      <div class="empty">
+        <div class="empty-icon" aria-hidden="true">?</div>
+        <h3>No questions published yet</h3>
+        <p>Ask us anything and we will answer directly.</p>
+        <a href="{% url 'cms:contact' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Contact us</a>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

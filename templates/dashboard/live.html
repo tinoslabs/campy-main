@@ -1,0 +1,113 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Live wall{% endblock %}
+{% block topbar_actions %}
+<form method="get" class="row row-tight">
+  <select name="site" class="input" data-autosubmit style="min-width:170px">
+    <option value="">All sites</option>
+    {% for site in sites %}<option value="{{ site.uid }}" {% if selected_site == site.uid|stringformat:"s" %}selected{% endif %}>{{ site.name }}</option>{% endfor %}
+  </select>
+</form>
+{% endblock %}
+
+{% block content %}
+<div class="page-head row-between">
+  <div>
+    <h1>Live wall</h1>
+    <p class="subtitle">{{ cameras|length }} camera{{ cameras|length|pluralize }} · frames refresh every few seconds</p>
+  </div>
+  <span class="row row-tight small muted"><span class="dot dot-live"></span> Live</span>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,3fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="grid grid-auto-lg">
+    {% for camera in cameras %}
+    <div class="camera-tile">
+      <div class="camera-view">
+        {% if camera.status == 'online' or camera.is_demo %}
+          {% comment %}
+            Tiles poll the reader's newest frame rather than each holding a
+            stream open: a wall of twenty would otherwise pin twenty server
+            threads. The poll is a memory read, so it can be brisk.
+          {% endcomment %}
+          <img src="{% url 'dashboard:camera_preview' camera.uid %}" alt="Live view of {{ camera.name }}"
+               loading="lazy" data-camera="{{ camera.uid }}" class="camera-frame"
+               data-live-tile="{% url 'dashboard:camera_preview' camera.uid %}"
+               data-live-interval="1000"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="camera-placeholder" style="display:none"
+               title="{{ camera.connection_hint|default:'Use Test connection on the camera page.' }}">
+            <span aria-hidden="true">▣</span><span>No frame available</span>
+          </div>
+        {% else %}
+          <div class="camera-placeholder">
+            <span aria-hidden="true" style="font-size:1.6rem">▣</span>
+            <span>{{ camera.get_status_display }}</span>
+          </div>
+        {% endif %}
+
+        {# Zone overlays drawn in relative coordinates over the frame. #}
+        <svg class="camera-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          {% for zone in camera.zones.all %}
+            {% if zone.is_active and zone.polygon %}
+              <polygon class="zone-poly {{ zone.kind }}" points="{% for point in zone.polygon %}{{ point.0|mul:100|floatformat:2 }},{{ point.1|mul:100|floatformat:2 }} {% endfor %}"/>
+            {% endif %}
+          {% endfor %}
+        </svg>
+
+        <div class="camera-status">
+          <span class="dot {% if camera.status == 'online' %}dot-live{% endif %}"
+                style="background:{% if camera.status == 'online' %}#34d399{% elif camera.status == 'degraded' %}#fbbf24{% else %}#f87171{% endif %}"></span>
+          {{ camera.get_status_display|upper }}
+        </div>
+        <div class="camera-meta">
+          <strong>{{ camera.name }}</strong> · {{ camera.site.name }}
+        </div>
+      </div>
+      <div class="camera-info row-between">
+        <div class="row row-tight">
+          {% for key in camera.enabled_analytics %}
+            <span class="chip tiny">{% if key == 'gesture' %}🚶{% elif key == 'face' %}☺{% elif key == 'geofence' %}⬡{% elif key == 'crowd' %}👥{% elif key == 'theft' %}🛡{% elif key == 'object' %}⚠{% else %}🔥{% endif %}</span>
+          {% endfor %}
+        </div>
+        <a href="{{ camera.get_absolute_url }}" class="btn btn-sm btn-ghost">Open →</a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty card" style="grid-column:1/-1">
+      <div class="empty-icon" aria-hidden="true">▣</div>
+      <h3>No cameras yet</h3>
+      <p>Connect a stream — or add a simulated camera — to see the live wall.</p>
+      {% if 'cameras.manage' in user_permissions %}
+        <a href="{% url 'dashboard:camera_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Connect a camera</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card" style="position:sticky;top:calc(var(--topbar-h) + var(--sp-5))">
+    <div class="card-head">
+      <h2 style="font-size:1.02rem">Event ticker</h2>
+      <span class="dot dot-live" style="background:var(--ok)"></span>
+    </div>
+    <div class="card-body" data-poll="{% url 'dashboard:live_feed' %}" data-poll-interval="8000">
+      {% include "dashboard/partials/event_ticker.html" %}
+    </div>
+  </div>
+</div>
+
+<script>
+/* Refresh camera frames on a stagger so a wall of tiles does not stampede the server. */
+(function(){
+  var frames = Array.prototype.slice.call(document.querySelectorAll('.camera-frame'));
+  if (!frames.length) return;
+  var index = 0;
+  setInterval(function(){
+    if (document.hidden) return;
+    var img = frames[index % frames.length];
+    index += 1;
+    var base = img.src.split('?')[0];
+    img.src = base + '?t=' + Date.now();
+  }, Math.max(1200, 6000 / frames.length));
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Platform console{% endblock %}
+{% block content %}
+<div class="page-head">
+  <span class="pill pill-accent">Campy AI platform</span>
+  <h1 style="margin-top:var(--sp-2)">Platform console</h1>
+  <p class="subtitle">Every customer workspace, package and payment across the platform.</p>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:var(--sp-5)">
+  <div class="stat"><div class="stat-label">Organisations</div><div class="stat-value">{{ stats.organizations|intcomma }}</div>
+    <div class="stat-meta">{{ stats.active_orgs }} active · {{ stats.trial_orgs }} on trial</div></div>
+  <div class="stat"><div class="stat-label">Revenue · 30 days</div><div class="stat-value">₹{{ stats.revenue_30d|floatformat:0|intcomma }}</div>
+    <div class="stat-meta">₹{{ stats.revenue_total|floatformat:0|intcomma }} all time</div></div>
+  <div class="stat"><div class="stat-label">Cameras deployed</div><div class="stat-value">{{ stats.cameras|intcomma }}</div>
+    <div class="stat-meta">{{ stats.events_30d|intcomma }} events in 30 days</div></div>
+  <div class="stat"><div class="stat-label">Needs attention</div>
+    <div class="stat-value" style="color:{% if stats.failed_payments or stats.trials_ending %}var(--warn){% else %}var(--ok){% endif %}">{{ stats.trials_ending }}</div>
+    <div class="stat-meta">trials ending · {{ stats.failed_payments }} failed payments</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-5);align-items:start">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Revenue by month</h2></div>
+      <div class="card-body">
+        <div style="display:flex;align-items:flex-end;gap:12px;height:140px">
+          {% for row in revenue_by_month %}
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%" title="{{ row.label }} — ₹{{ row.total|floatformat:0 }}">
+            <div class="tiny center numeric dim" style="margin-bottom:4px">₹{{ row.total|floatformat:0|intcomma }}</div>
+            <div style="background:var(--accent);border-radius:4px 4px 0 0;min-height:3px;height:{% progress_width row.total revenue_max %}%"></div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="row" style="margin-top:6px">
+          {% for row in revenue_by_month %}<span class="tiny dim center" style="flex:1">{{ row.label }}</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Newest organisations</h2>
+        <a href="{% url 'dashboard:admin_organizations' %}" class="small">All →</a></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Organisation</th><th>Industry</th><th>Status</th><th>Signed up</th></tr></thead>
+          <tbody>
+            {% for org in recent_orgs %}
+            <tr>
+              <td><a href="{% url 'dashboard:admin_organization_detail' org.slug %}" class="semibold">{{ org.name }}</a>
+                <div class="tiny dim">{{ org.contact_email }}</div></td>
+              <td class="small">{{ org.get_industry_display }}</td>
+              <td>{{ org.status|status_pill }}</td>
+              <td class="small nowrap">{{ org.created_at|date:"j M Y" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.05rem">Recent payments</h2></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Organisation</th><th>Package</th><th>Gateway</th><th>Amount</th><th>Status</th><th>When</th></tr></thead>
+          <tbody>
+            {% for payment in recent_payments %}
+            <tr>
+              <td class="small">{{ payment.organization.name }}</td>
+              <td class="small">{{ payment.package.name|default:"—" }}</td>
+              <td><span class="pill pill-muted">{{ payment.get_gateway_display }}</span></td>
+              <td class="numeric semibold">{{ payment.currency_symbol }}{{ payment.amount|floatformat:2|intcomma }}</td>
+              <td>{{ payment.status|status_pill }}</td>
+              <td class="small nowrap">{{ payment.created_at|date:"j M, H:i" }}</td>
+            </tr>
+            {% empty %}<tr><td colspan="6" class="center muted" style="padding:var(--sp-5)">No payments recorded yet.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Packages</h2>
+        <a href="{% url 'dashboard:admin_packages' %}" class="small">Manage →</a></div>
+      <div class="card-body">
+        <div class="stack-sm">
+          {% for package in packages %}
+          <div class="row-between">
+            <div>
+              <span class="small semibold">{{ package.name }}</span>
+              <div class="tiny dim">₹{{ package.price_inr|floatformat:0 }}/{{ package.get_interval_display|lower }}</div>
+            </div>
+            <span class="pill pill-accent">{{ package.live_subs }}</span>
+          </div>
+          {% empty %}<p class="small muted">No packages defined.
+            <a href="{% url 'dashboard:admin_package_create' %}">Create one →</a></p>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="upper">Platform totals</div>
+      <dl class="kv" style="margin-top:var(--sp-3)">
+        <dt>MRR (INR)</dt><dd class="numeric">₹{{ stats.mrr|floatformat:0|intcomma }}</dd>
+        <dt>Users</dt><dd class="numeric">{{ stats.users|intcomma }}</dd>
+        <dt>Base models</dt><dd class="numeric">{{ stats.base_models }}</dd>
+        <dt>New leads</dt><dd class="numeric">{{ leads_count }}</dd>
+      </dl>
+    </div>
+
+    <div class="card card-pad">
+      <div class="upper">Manage</div>
+      <div class="stack-sm" style="margin-top:var(--sp-3)">
+        <a href="{% url 'dashboard:admin_organizations' %}" class="small">Organisations →</a>
+        <a href="{% url 'dashboard:admin_packages' %}" class="small">Packages &amp; pricing →</a>
+        <a href="{% url 'cms:cms_pages' %}" class="small">Website pages →</a>
+        <a href="{% url 'cms:cms_posts' %}" class="small">Blog posts →</a>
+        <a href="{% url 'cms:cms_leads' %}" class="small">Leads ({{ leads_count }}) →</a>
+        <a href="{% url 'cms:cms_settings' %}" class="small">Site settings →</a>
+        <a href="/django-admin/" class="small">Django admin →</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

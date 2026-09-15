@@ -1,0 +1,18 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Sign in · {{ BRAND.name }}{% endblock %}
+{% block auth_content %}
+<div class="card card-pad">
+  <h1 style="font-size:1.45rem">Sign in</h1>
+  <p class="muted small">Welcome back. Sign in to your workspace.</p>
+  <form method="post" novalidate style="margin-top:var(--sp-4)">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% include "partials/form.html" %}
+    <button type="submit" class="btn btn-primary btn-block btn-lg">Sign in</button>
+  </form>
+  <div class="row-between" style="margin-top:var(--sp-4)">
+    <a href="{% url 'accounts:password_reset' %}" class="small">Forgot your password?</a>
+    <a href="{% url 'accounts:signup' %}" class="small">Create an account</a>
+  </div>
+</div>
+{% endblock %}

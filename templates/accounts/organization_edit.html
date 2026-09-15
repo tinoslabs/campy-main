@@ -1,0 +1,20 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Organisation details{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:settings' %}">Back</a> <span>/</span> <span>Organisation details</span></div>
+  <h1>Organisation details</h1><p class="subtitle">Your legal and billing information.</p>
+</div>
+<div class="card" style="max-width:720px">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% include "partials/form.html" %}
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'dashboard:settings' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

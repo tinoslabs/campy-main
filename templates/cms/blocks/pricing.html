@@ -1,0 +1,6 @@
+<section class="section {% if block.background == 'muted' %}section-muted{% endif %}">
+  <div class="container center">
+    {% if block.heading %}<div class="section-head"><h2>{{ block.heading }}</h2>{% if block.subheading %}<p class="lead">{{ block.subheading }}</p>{% endif %}</div>{% endif %}
+    <a href="{% url 'cms:pricing' %}" class="btn btn-primary btn-lg">{{ block.primary_label|default:"See pricing" }}</a>
+  </div>
+</section>

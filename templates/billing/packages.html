@@ -1,0 +1,43 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Choose a package{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Packages</h1><p class="subtitle">Pick the plan that matches how much you monitor.</p></div>
+<div class="grid grid-auto-lg">
+  {% for package in packages %}
+  <div class="price-card {% if package.is_featured %}featured{% endif %}">
+    {% if package.badge %}<span class="price-badge">{{ package.badge }}</span>{% endif %}
+    <h3>{{ package.name }}</h3>
+    <p class="small muted" style="min-height:36px">{{ package.tagline }}</p>
+    <div class="price-amount">
+      {% if currency == 'INR' %}₹{{ package.price_inr|floatformat:0|intcomma }}{% else %}${{ package.price_usd|floatformat:0|intcomma }}{% endif %}
+    </div>
+    <div class="small dim">per {{ package.get_interval_display|lower }}</div>
+    <ul class="price-features">
+      <li><strong>{{ package.quotas.cameras|default:"0" }}</strong>&nbsp;cameras</li>
+      <li><strong>{{ package.quotas.sites|default:"1" }}</strong>&nbsp;site{{ package.quotas.sites|pluralize }}</li>
+      <li><strong>{{ package.quotas.users|default:"1" }}</strong>&nbsp;team members</li>
+      <li><strong>{{ package.quotas.retention_days|default:"30" }}</strong>&nbsp;days retention</li>
+      {% for key, label in feature_labels.items %}
+        {% if package.features|get_item:key %}<li>{{ label }}</li>{% endif %}
+      {% endfor %}
+    </ul>
+    {% if current_package.pk == package.pk %}
+      <span class="btn btn-block disabled">Your current plan</span>
+    {% elif can_manage %}
+      <a href="{% url 'billing:checkout' package.slug %}" class="btn {% if package.is_featured %}btn-primary{% endif %} btn-block">
+        {% if current_package %}Switch to {{ package.name }}{% else %}Choose {{ package.name }}{% endif %}
+      </a>
+    {% else %}
+      <span class="btn btn-block disabled">Ask an owner to change the plan</span>
+    {% endif %}
+  </div>
+  {% empty %}
+  <div class="empty card" style="grid-column:1/-1">
+    <div class="empty-icon" aria-hidden="true">◫</div><h3>No packages available</h3>
+    <p>Get in touch and we will set up pricing for your deployment.</p>
+    <a href="{% url 'cms:contact' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Contact us</a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

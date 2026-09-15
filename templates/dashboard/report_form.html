@@ -1,0 +1,34 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if report %}Edit report{% else %}New report{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:reports' %}">Reports</a> <span>/</span> <span>{% if report %}{{ report.name }}{% else %}New{% endif %}</span></div>
+  <h1>{% if report %}Edit “{{ report.name }}”{% else %}Create a report{% endif %}</h1>
+</div>
+<div class="card" style="max-width:820px">
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_field.html" with field=form.name %}
+      <div class="form-grid">
+        {% include "partials/form_field.html" with field=form.kind %}
+        {% include "partials/form_field.html" with field=form.frequency %}
+        {% include "partials/form_field.html" with field=form.output_format %}
+        {% include "partials/form_field.html" with field=form.date_range_days %}
+        {% include "partials/form_field.html" with field=form.sites %}
+        {% include "partials/form_field.html" with field=form.cameras %}
+      </div>
+      <fieldset>
+        <legend>Limit to analytics</legend>
+        <div class="grid grid-2">{% for choice in form.analytics %}<label class="check">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>{% endfor %}</div>
+      </fieldset>
+      {% include "partials/form_field.html" with field=form.recipient_emails %}
+      {% include "partials/form_field.html" with field=form.is_active %}
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Save report</button>
+        <a href="{% url 'dashboard:reports' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

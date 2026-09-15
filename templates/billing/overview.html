@@ -1,0 +1,117 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Billing{% endblock %}
+{% block topbar_actions %}{% if can_manage %}<a href="{% url 'billing:packages' %}" class="btn btn-sm btn-primary">Change plan</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Billing</h1><p class="subtitle">Your plan, usage and invoices.</p></div>
+
+{% if subscription %}
+<div class="card card-pad" style="margin-bottom:var(--sp-5);{% if subscription.status == 'past_due' %}border-color:var(--warn){% endif %}">
+  <div class="row-between">
+    <div>
+      <div class="row row-tight">{{ subscription.status|status_pill }}
+        <span class="pill pill-muted">{{ subscription.get_gateway_display }}</span></div>
+      <h2 style="margin:var(--sp-2) 0 4px">{{ package.name }}</h2>
+      <p class="muted small" style="margin:0">{{ package.tagline }}</p>
+    </div>
+    <div class="right">
+      <div class="price-amount">{% if subscription.currency == 'INR' %}₹{% else %}${% endif %}{{ subscription.amount|floatformat:0|intcomma }}</div>
+      <div class="small dim">per {{ package.get_interval_display|lower }}</div>
+    </div>
+  </div>
+  <div class="grid grid-4" style="margin-top:var(--sp-5)">
+    <div><div class="upper">Status</div><div class="semibold">{{ subscription.get_status_display }}</div></div>
+    <div><div class="upper">{% if subscription.is_trialing %}Trial ends{% else %}Renews{% endif %}</div>
+      <div class="semibold">{{ subscription.current_period_end|date:"j M Y"|default:"—" }}</div></div>
+    <div><div class="upper">Days left</div><div class="semibold numeric">{{ subscription.days_remaining }}</div></div>
+    <div><div class="upper">Started</div><div class="semibold">{{ subscription.started_at|date:"j M Y" }}</div></div>
+  </div>
+  {% if subscription.status == 'past_due' %}
+  <div class="alert alert-warning" style="margin:var(--sp-4) 0 0">
+    <span aria-hidden="true">!</span>
+    <div><strong>Payment is overdue.</strong> Monitoring continues during a seven-day grace period — we do not switch off a security system the moment a card fails. Renew to avoid suspension.</div>
+  </div>
+  {% endif %}
+  {% if can_manage %}
+  <div class="row" style="margin-top:var(--sp-4)">
+    <a href="{% url 'billing:packages' %}" class="btn btn-primary">Change plan</a>
+    {% if not subscription.cancel_at_period_end %}
+    <form method="post" action="{% url 'billing:cancel' %}" data-confirm="Cancel at the end of the current period? Monitoring continues until then.">
+      {% csrf_token %}<button class="btn btn-ghost">Cancel plan</button></form>
+    {% else %}
+      <span class="pill pill-warn">Cancels on {{ subscription.current_period_end|date:"j M Y" }}</span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="empty card" style="margin-bottom:var(--sp-5)">
+  <div class="empty-icon" aria-hidden="true">◫</div><h3>No active package</h3>
+  <p>Choose a package to activate monitoring on this workspace.</p>
+  <a href="{% url 'billing:packages' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Choose a package</a>
+</div>
+{% endif %}
+
+<div class="grid grid-2" style="align-items:start">
+  <div class="card">
+    <div class="card-head"><h2 style="font-size:1.02rem">Usage against your plan</h2></div>
+    <div class="card-body">
+      {% for key, row in quotas.items %}
+      <div style="margin-bottom:var(--sp-4)">
+        <div class="row-between small">
+          <span>{{ quota_labels|get_item:key|default:key }}</span>
+          <span class="numeric semibold">{{ row.used }} {% if row.unlimited %}<span class="dim">/ unlimited</span>{% else %}/ {{ row.limit }}{% endif %}</span>
+        </div>
+        {% if not row.unlimited %}
+        <div class="meter" style="margin-top:4px">
+          <div class="meter-fill {% if row.exceeded %}bad{% elif row.near_limit %}warn{% else %}ok{% endif %}" style="width:{{ row.percent }}%"></div>
+        </div>
+        {% if row.exceeded %}<div class="tiny" style="color:var(--bad);margin-top:3px">Over your plan limit — upgrade to add more.</div>{% endif %}
+        {% endif %}
+      </div>
+      {% empty %}<p class="small muted">No quotas to show.</p>{% endfor %}
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Invoices</h2>
+        <a href="{% url 'billing:invoices' %}" class="small">All →</a></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Number</th><th>Date</th><th>Total</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for invoice in invoices %}
+            <tr>
+              <td class="mono tiny"><a href="{{ invoice.get_absolute_url }}">{{ invoice.number }}</a></td>
+              <td class="small nowrap">{{ invoice.issued_at|date:"j M Y" }}</td>
+              <td class="numeric small">{{ invoice.currency_symbol }}{{ invoice.total|floatformat:2 }}</td>
+              <td>{{ invoice.status|status_pill }}</td>
+            </tr>
+            {% empty %}<tr><td colspan="4" class="center muted">No invoices yet.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Payments</h2></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Gateway</th><th>Amount</th><th>Status</th><th>When</th></tr></thead>
+          <tbody>
+            {% for payment in payments %}
+            <tr>
+              <td><span class="pill pill-muted">{{ payment.get_gateway_display }}</span></td>
+              <td class="numeric small">{{ payment.currency_symbol }}{{ payment.amount|floatformat:2 }}</td>
+              <td>{{ payment.status|status_pill }}</td>
+              <td class="small nowrap">{{ payment.created_at|date:"j M, H:i" }}</td>
+            </tr>
+            {% empty %}<tr><td colspan="4" class="center muted">No payments yet.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

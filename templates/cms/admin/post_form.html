@@ -1,0 +1,39 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if post %}Edit post{% else %}New post{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'cms:cms_posts' %}">Posts</a> <span>/</span> <span>{% if post %}{{ post.title|truncatechars:34 }}{% else %}New{% endif %}</span></div>
+  <h1>{% if post %}Edit post{% else %}Write a post{% endif %}</h1>
+</div>
+<div class="card" style="max-width:900px">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_field.html" with field=form.title %}
+      <div class="form-grid">
+        {% include "partials/form_field.html" with field=form.slug %}
+        {% include "partials/form_field.html" with field=form.category %}
+        {% include "partials/form_field.html" with field=form.author_name %}
+        {% include "partials/form_field.html" with field=form.status %}
+        {% include "partials/form_field.html" with field=form.published_at %}
+        {% include "partials/form_field.html" with field=form.tags %}
+      </div>
+      {% include "partials/form_field.html" with field=form.excerpt %}
+      {% include "partials/form_field.html" with field=form.body %}
+      {% include "partials/form_field.html" with field=form.cover_image %}
+      {% include "partials/form_field.html" with field=form.is_featured %}
+      <fieldset>
+        <legend>Search &amp; social</legend>
+        {% include "partials/form_field.html" with field=form.seo_title %}
+        {% include "partials/form_field.html" with field=form.seo_description %}
+        {% include "partials/form_field.html" with field=form.og_image %}
+        {% include "partials/form_field.html" with field=form.no_index %}
+      </fieldset>
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Save post</button>
+        <a href="{% url 'cms:cms_posts' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

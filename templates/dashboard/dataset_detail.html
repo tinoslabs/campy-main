@@ -1,0 +1,166 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}{{ dataset.name }}{% endblock %}
+{% block topbar_actions %}
+{% if 'training.datasets' in user_permissions %}<a href="{% url 'dashboard:dataset_edit' dataset.uid %}" class="btn btn-sm">Edit</a>{% endif %}
+{% if dataset.is_trainable and 'training.run' in user_permissions %}
+  <a href="{% url 'dashboard:training_job_create' %}" class="btn btn-sm btn-primary">▶ Train a model</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:datasets' %}">Datasets</a> <span>/</span> <span>{{ dataset.name }}</span></div>
+  <div class="row-between">
+    <div>
+      <div class="row row-tight">{{ dataset.status|status_pill }}<span class="pill pill-muted">{{ dataset.get_task_display }}</span></div>
+      <h1 style="margin-top:var(--sp-2)">{{ dataset.name }}</h1>
+      <p class="subtitle">{{ dataset.labelled_count|intcomma }} labelled of {{ dataset.sample_count|intcomma }} · {{ dataset.class_count }} classes · {{ dataset.image_size }}px</p>
+    </div>
+  </div>
+</div>
+
+{% if not readiness.classes_ok or not readiness.samples_ok %}
+<div class="alert alert-warning">
+  <span aria-hidden="true">!</span>
+  <div><strong>Not ready to train.</strong>
+    {{ readiness.labelled }} labelled sample{{ readiness.labelled|pluralize }} of {{ readiness.required }} needed
+    across at least 2 classes.</div>
+</div>
+{% elif readiness.balance_warning %}
+<div class="alert alert-warning">
+  <span aria-hidden="true">!</span>
+  <div><strong>Classes are imbalanced.</strong> The largest class is more than 4× the smallest.
+    Training will apply inverse-frequency weighting, but adding examples of the rare class helps far more.</div>
+</div>
+{% else %}
+<div class="alert alert-success"><span aria-hidden="true">✓</span><div><strong>Ready to train.</strong></div></div>
+{% endif %}
+
+<div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,2.4fr);gap:var(--sp-5);align-items:start">
+  <div class="stack">
+    <div class="card card-pad">
+      <div class="upper">Class balance</div>
+      <div style="margin-top:var(--sp-3)">
+        {% for row in distribution %}
+        <div style="margin-bottom:var(--sp-3)">
+          <div class="row-between small"><span>{{ row.name }}</span><span class="semibold numeric">{{ row.count }}</span></div>
+          <div class="meter" style="margin-top:4px"><div class="meter-fill" style="width:{% progress_width row.count distribution_max %}%"></div></div>
+        </div>
+        {% endfor %}
+        {% if unlabelled %}
+        <div class="row-between small" style="margin-top:var(--sp-3);padding-top:var(--sp-3);border-top:1px solid var(--border)">
+          <span class="dim">Unlabelled</span><span class="semibold numeric">{{ unlabelled }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if 'training.annotate' in user_permissions %}
+    <div class="card">
+      <div class="card-head"><h2 style="font-size:1.02rem">Add samples</h2></div>
+      <div class="card-body">
+        <form method="post" action="{% url 'dashboard:dataset_upload' dataset.uid %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="field">
+            <label for="images">Images</label>
+            <input type="file" id="images" name="images" accept="image/*" multiple class="input" required>
+          </div>
+          <div class="field">
+            <label for="label">Label them as</label>
+            <select id="label" name="label" class="input">
+              <option value="">— Leave unlabelled —</option>
+              {% for name in dataset.classes %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-primary btn-block">Upload</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if 'training.datasets' in user_permissions %}
+    <div class="card card-pad">
+      <div class="upper">Shortcuts</div>
+      <form method="post" action="{% url 'dashboard:dataset_harvest' dataset.uid %}" style="margin-top:var(--sp-3)">
+        {% csrf_token %}<button class="btn btn-sm btn-block">Import dismissed false alarms</button>
+      </form>
+      <p class="tiny dim" style="margin:6px 0 var(--sp-3)">Every alert an operator called wrong becomes a hard negative.</p>
+      <form method="post" action="{% url 'dashboard:dataset_bootstrap' dataset.uid %}"
+            data-confirm="Generate synthetic samples? Useful for proving the pipeline, but replace them with real footage before production.">
+        {% csrf_token %}
+        <input type="hidden" name="per_class" value="60">
+        <button class="btn btn-sm btn-block">Generate sample data</button>
+      </form>
+      <p class="tiny dim" style="margin:6px 0 0">Creates learnable synthetic images so you can run training today.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2 style="font-size:1.05rem">Samples</h2>
+      <form method="get" class="row row-tight">
+        <select name="label" class="input" data-autosubmit style="width:auto">
+          <option value="">All samples</option>
+          <option value="__unlabelled__" {% if label_filter == '__unlabelled__' %}selected{% endif %}>Unlabelled only</option>
+          {% for name in dataset.classes %}<option value="{{ name }}" {% if label_filter == name %}selected{% endif %}>{{ name }}</option>{% endfor %}
+        </select>
+      </form>
+    </div>
+    <div class="card-body">
+      {% if samples %}
+      <form method="post" action="{% url 'dashboard:dataset_label' dataset.uid %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px">
+          {% for sample in samples %}
+          <label style="cursor:pointer;position:relative">
+            <input type="checkbox" name="sample_uids" value="{{ sample.uid }}" class="sample-check"
+                   style="position:absolute;top:5px;left:5px;z-index:2;width:16px;height:16px;accent-color:var(--accent)">
+            {% if sample.image %}
+              <img src="{{ sample.image.url }}" alt="" loading="lazy"
+                   style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius-sm);border:2px solid var(--border)">
+            {% else %}
+              <div class="skeleton" style="aspect-ratio:1"></div>
+            {% endif %}
+            <div class="tiny center truncate" style="margin-top:3px">
+              {% if sample.label %}<span class="pill pill-accent tiny">{{ sample.label }}</span>{% else %}<span class="dim">unlabelled</span>{% endif %}
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+
+        {% if 'training.annotate' in user_permissions %}
+        <div class="row" style="margin-top:var(--sp-4);padding-top:var(--sp-4);border-top:1px solid var(--border)">
+          <span class="small dim" id="sample-count"></span>
+          <div class="spacer"></div>
+          <select name="label" class="input" style="width:auto" required>
+            <option value="">Label selected as…</option>
+            {% for name in dataset.classes %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
+          </select>
+          <button class="btn btn-primary btn-sm">Apply label</button>
+        </div>
+        {% endif %}
+      </form>
+      {% include "partials/pagination.html" %}
+      {% else %}
+      <div class="empty"><div class="empty-icon" aria-hidden="true">⛁</div><h3>No samples yet</h3>
+        <p>Upload images, import dismissed false alarms, or generate sample data to try the pipeline.</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var counter = document.getElementById('sample-count');
+  if (!counter) return;
+  document.querySelectorAll('.sample-check').forEach(function(box){
+    box.addEventListener('change', function(){
+      var n = document.querySelectorAll('.sample-check:checked').length;
+      counter.textContent = n ? n + ' selected' : '';
+    });
+  });
+})();
+</script>
+{% endblock %}

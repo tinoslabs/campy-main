@@ -1,0 +1,101 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}Team &amp; roles{% endblock %}
+{% block topbar_actions %}
+{% if can_edit_roles %}<a href="{% url 'accounts:roles' %}" class="btn btn-sm">Manage roles</a>{% endif %}
+{% if can_invite %}<a href="{% url 'accounts:invite_member' %}" class="btn btn-sm btn-primary">＋ Invite</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="page-head row-between">
+  <div><h1>Team</h1><p class="subtitle">Who has access to {{ current_organization.name }}, and what they can do.</p></div>
+  {% if quota.limit and not quota.unlimited %}
+  <div class="panel" style="min-width:190px">
+    <div class="row-between tiny"><span class="upper">Seats</span><span class="numeric">{{ quota.used }}/{{ quota.limit }}</span></div>
+    <div class="meter" style="margin-top:5px">
+      <div class="meter-fill {% if quota.exceeded %}bad{% elif quota.near_limit %}warn{% else %}ok{% endif %}" style="width:{{ quota.percent }}%"></div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-bottom:var(--sp-5)">
+  <div class="card-head"><h2 style="font-size:1.05rem">Members</h2></div>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Person</th><th>Role</th><th>Title</th><th>Site access</th><th>Last active</th><th>Status</th><th class="right">Actions</th></tr></thead>
+      <tbody>
+        {% for membership in memberships %}
+        <tr>
+          <td>
+            <div class="row row-tight">
+              <span class="avatar avatar-sm">{% if membership.user.avatar %}<img src="{{ membership.user.avatar.url }}" alt="">{% else %}{{ membership.user.initials }}{% endif %}</span>
+              <div>
+                <span class="semibold">{{ membership.user.get_full_name }}</span>
+                {% if membership.user_id == user.pk %}<span class="pill pill-accent tiny">You</span>{% endif %}
+                <div class="tiny dim">{{ membership.user.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="pill" style="background:{{ membership.role.color }}18;color:{{ membership.role.color }}">{{ membership.role.name }}</span>
+            <div class="tiny dim">{{ membership.role.permission_count }} permissions</div></td>
+          <td class="small">{{ membership.title|default:"—" }}</td>
+          <td class="small">{% with ids=membership.scoped_site_ids %}{% if ids %}{{ ids|length }} site{{ ids|length|pluralize }}{% else %}All sites{% endif %}{% endwith %}</td>
+          <td class="small nowrap">{{ membership.last_active_at|ago }}</td>
+          <td>{{ membership.status|status_pill }}</td>
+          <td class="actions">
+            {% if can_manage %}<a href="{% url 'accounts:edit_membership' membership.uid %}" class="btn btn-sm btn-ghost">Edit</a>{% endif %}
+            {% if can_remove and membership.user_id != user.pk %}
+            <form method="post" action="{% url 'accounts:remove_member' membership.uid %}" style="display:inline"
+                  data-confirm="Remove {{ membership.user.get_full_name }} from this workspace?">
+              {% csrf_token %}<button class="btn btn-sm btn-ghost" style="color:var(--bad)">Remove</button></form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if invitations %}
+<div class="card" style="margin-bottom:var(--sp-5)">
+  <div class="card-head"><h2 style="font-size:1.05rem">Pending invitations</h2></div>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Email</th><th>Role</th><th>Invited by</th><th>Expires</th><th class="right"></th></tr></thead>
+      <tbody>
+        {% for invitation in invitations %}
+        <tr>
+          <td class="semibold">{{ invitation.email }}</td>
+          <td><span class="pill pill-muted">{{ invitation.role.name }}</span></td>
+          <td class="small">{{ invitation.invited_by.get_short_name|default:"—" }}</td>
+          <td class="small {% if invitation.is_expired %}dim{% endif %}">{{ invitation.expires_at|date:"j M Y" }}</td>
+          <td class="actions">
+            {% if can_invite %}
+            <form method="post" action="{% url 'accounts:revoke_invitation' invitation.uid %}" style="display:inline">
+              {% csrf_token %}<button class="btn btn-sm btn-ghost" style="color:var(--bad)">Revoke</button></form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<h2 style="font-size:1.1rem">Roles in this workspace</h2>
+<div class="grid grid-auto">
+  {% for role in roles %}
+  <div class="card card-pad">
+    <div class="row-between">
+      <div class="row row-tight">
+        <span class="dot" style="color:{{ role.color }};width:10px;height:10px"></span>
+        <span class="semibold">{{ role.name }}</span>
+      </div>
+      <span class="small numeric">{{ role.member_count }}</span>
+    </div>
+    <p class="tiny muted" style="margin-top:6px">{{ role.description|truncatechars:90 }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

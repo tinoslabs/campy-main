@@ -1,0 +1,21 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Create your workspace · {{ BRAND.name }}{% endblock %}
+{% block side_title %}Set up in minutes, not weeks{% endblock %}
+{% block side_body %}
+Create a workspace, connect a camera — or start with the built-in simulated one —
+and watch every detector work before you touch any hardware.
+{% endblock %}
+{% block auth_content %}
+<div class="card card-pad">
+  <h1 style="font-size:1.45rem">Create your workspace</h1>
+  <p class="muted small">Free trial. No credit card required.</p>
+  <form method="post" novalidate style="margin-top:var(--sp-4)">
+    {% csrf_token %}
+    {% include "partials/form.html" %}
+    <button type="submit" class="btn btn-primary btn-block btn-lg">Create workspace</button>
+  </form>
+  <p class="center small muted" style="margin-top:var(--sp-4)">
+    Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a>
+  </p>
+</div>
+{% endblock %}

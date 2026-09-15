@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Campy AI — Technical Handbook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<link rel="stylesheet" href="fonts.css" media="all" onerror="">
+<link rel="stylesheet" href="style.css">
+</head><body>
+
+<div class="cover">
+  <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+    <circle cx="20" cy="20" r="18" fill="none" stroke="#e8f2f0" stroke-width="2.2" opacity=".3"/>
+    <circle cx="20" cy="20" r="10.5" fill="none" stroke="#4ec2b2" stroke-width="2.4"/>
+    <circle cx="20" cy="20" r="3.6" fill="#4ec2b2"/>
+  </svg>
+  <div class="brand">Campy <span>AI</span></div>
+  <div class="kind">Technical Handbook</div>
+  <h1>Connecting cameras, and what happens to every frame</h1>
+  <p class="sub">How a CCTV camera reaches the platform, how one frame becomes an
+  alert, and how to size, secure and operate a deployment.</p>
+  <div class="meta">
+    <span>FOR INSTALLERS, INTEGRATORS AND ENGINEERS</span>
+    <span>REVISION 1</span>
+  </div>
+</div>
+
+<div class="toc">
+  <div class="eyebrow">Contents</div>
+  <h1 class="chapter">Technical Handbook</h1><hr class="chapter-rule">
+  <ol>
+    <li><span class="t">How a camera reaches the platform</span><span class="d">Topology, protocols, and why nothing is exposed to the internet</span></li>
+    <li><span class="t">Adding a camera</span><span class="d">RTSP, ONVIF, MJPEG, HLS, file and simulated sources</span></li>
+    <li><span class="t">ONVIF discovery</span><span class="d">The SOAP calls, the digest, and the two field quirks that matter</span></li>
+    <li><span class="t">Credentials and secrets</span><span class="d">Where a password lives and where it never appears</span></li>
+    <li><span class="t">The worker</span><span class="d">Threads, pacing, reconnection and health</span></li>
+    <li><span class="t">One frame, end to end</span><span class="d">Seven stages from pixels to a stored event</span></li>
+    <li><span class="t">The seven analytics</span><span class="d">What each one computes, and what it costs</span></li>
+    <li><span class="t">Events, incidents and alerts</span><span class="d">Three layers of noise control</span></li>
+    <li><span class="t">Zones</span><span class="d">Relative coordinates, schedules and containment</span></li>
+    <li><span class="t">Capacity planning</span><span class="d">Measured numbers, and the two dials that change them</span></li>
+    <li><span class="t">Training your own models</span><span class="d">Datasets, jobs, registry and rollback</span></li>
+    <li><span class="t">Operations</span><span class="d">Running, scaling, monitoring and troubleshooting</span></li>
+  </ol>
+  
+</div>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 1</div>
+<h1 class="chapter">How a camera reaches the platform</h1><hr class="chapter-rule">
+
+<p class="lede">Campy AI does not replace your CCTV. It is a piece of software that
+sits on the same network as cameras you already own, pulls frames from them, and
+turns those frames into findings. No camera is modified, and no camera is
+exposed to the internet.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 700 210" role="img" aria-label="Cameras on a local network connect to a Campy AI server, which serves operators over HTTPS.">
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0 L8 4 L0 8 z" fill="#0a6d64"/>
+    </marker>
+  </defs>
+  <rect x="6" y="16" width="270" height="178" rx="6" fill="#f4f8f7" stroke="#d2dedc"/>
+  <text x="18" y="34" font-family="JetBrains Mono, monospace" font-size="10" fill="#7b8f8c">PRIVATE NETWORK — NO INBOUND INTERNET</text>
+
+  <g font-family="Archivo, sans-serif" font-size="11" fill="#15201f">
+    <rect x="22" y="48" width="104" height="30" rx="4" fill="#fff" stroke="#d2dedc"/>
+    <text x="34" y="67">Camera · RTSP</text>
+    <rect x="22" y="88" width="104" height="30" rx="4" fill="#fff" stroke="#d2dedc"/>
+    <text x="34" y="107">Camera · ONVIF</text>
+    <rect x="22" y="128" width="104" height="30" rx="4" fill="#fff" stroke="#d2dedc"/>
+    <text x="34" y="147">NVR · RTSP</text>
+
+    <rect x="158" y="78" width="104" height="60" rx="4" fill="#101b1f" stroke="#101b1f"/>
+    <text x="176" y="102" fill="#e8f2f0" font-weight="600">Campy AI</text>
+    <text x="176" y="120" fill="#4ec2b2" font-family="JetBrains Mono, monospace" font-size="9">worker + web</text>
+  </g>
+
+  <g stroke="#0a6d64" stroke-width="1.4" fill="none" marker-end="url(#a)">
+    <path d="M128 63 L156 95"/>
+    <path d="M128 103 L156 105"/>
+    <path d="M128 143 L156 118"/>
+  </g>
+
+  <g font-family="Archivo, sans-serif" font-size="11" fill="#15201f">
+    <rect x="430" y="48" width="120" height="30" rx="4" fill="#fff" stroke="#d2dedc"/>
+    <text x="444" y="67">Control room</text>
+    <rect x="430" y="90" width="120" height="30" rx="4" fill="#fff" stroke="#d2dedc"/>
+    <text x="444" y="109">Manager, phone</text>
+    <rect x="430" y="132" width="120" height="30" rx="4" fill="#fff" stroke="#d2dedc"/>
+    <text x="444" y="151">Email / webhook</text>
+  </g>
+  <g stroke="#0a6d64" stroke-width="1.4" fill="none" marker-end="url(#a)">
+    <path d="M264 98 L428 63"/>
+    <path d="M264 106 L428 105"/>
+    <path d="M264 116 L428 147"/>
+  </g>
+  <text x="300" y="186" font-family="JetBrains Mono, monospace" font-size="9" fill="#7b8f8c">HTTPS · outbound only</text>
+</svg>
+<figcaption>Frames travel one way: the server opens a connection <em>to</em> each camera
+and pulls from it. Cameras never need a port forward, a public address, or a
+route to the internet. Everything a person sees is served by the same machine
+over HTTPS.</figcaption>
+</div>
+
+<h2>What the camera has to be able to do</h2>
+<p>Exactly one thing: emit a video stream over the network. Every CCTV camera
+and NVR sold in the last decade can. Campy AI reads six kinds of source:</p>
+
+<table>
+  <thead><tr><th>Protocol</th><th>Typical source</th><th>What you supply</th></tr></thead>
+  <tbody>
+    <tr><td class="name">RTSP</td><td>Almost every IP camera and NVR channel</td><td>Stream URL, username, password</td></tr>
+    <tr><td class="name">ONVIF</td><td>Any Profile S camera — the same hardware, asked politely</td><td>IP address, port, username, password</td></tr>
+    <tr><td class="name">HTTP / MJPEG</td><td>Older cameras, some door stations</td><td>Snapshot or stream URL</td></tr>
+    <tr><td class="name">HLS</td><td>Restreamers, some cloud NVRs</td><td>Playlist URL</td></tr>
+    <tr><td class="name">Video file</td><td>Recorded footage, for testing a site before install</td><td>Path on the server</td></tr>
+    <tr><td class="name">Simulated</td><td>Built-in synthetic scenes</td><td>Nothing — used to prove the system before hardware arrives</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+<h4>An analogue camera is not excluded</h4>
+<p>If a site runs analogue cameras into a DVR, the DVR almost certainly exposes
+RTSP per channel. Point Campy AI at the DVR, one camera row per channel. The
+cameras themselves never change.</p>
+</div>
+
+<h2>Decoding versus analysis</h2>
+<p>OpenCV (FFmpeg underneath) is used <em>only</em> to decode the stream into
+frames. Nothing about the analysis touches it: every detector, model and weight
+runs in Campy AI's own NumPy engine in <code>apps/aiengine/</code>. The boundary
+is deliberate — decoding is a solved problem with a mature library; the
+intelligence is the part we own.</p>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 2</div>
+<h1 class="chapter">Adding a camera</h1><hr class="chapter-rule">
+
+<p class="lede">Cameras live under <code>/app/cameras/</code>. A camera belongs to
+a site, and a site belongs to a workspace — that chain is what keeps one
+customer's footage away from another's.</p>
+
+<h2>The fields, and what each one does</h2>
+<table>
+  <thead><tr><th>Field</th><th>Meaning</th><th>Default</th></tr></thead>
+  <tbody>
+    <tr><td class="name">protocol</td><td>Which reader to use</td><td class="num">rtsp</td></tr>
+    <tr><td class="name">stream_url</td><td>Where the video is. For ONVIF, filled in by discovery</td><td class="num">—</td></tr>
+    <tr><td class="name">username / password</td><td>Stored apart from the URL so the URL can be shown safely</td><td class="num">—</td></tr>
+    <tr><td class="name">onvif_host / onvif_port</td><td>The camera's address for ONVIF discovery</td><td class="num">— / 80</td></tr>
+    <tr><td class="name">target_fps</td><td><strong>Frames analysed per second.</strong> The main cost dial</td><td class="num">6.0</td></tr>
+    <tr><td class="name">source_fps</td><td>What the camera emits, for reference</td><td class="num">25.0</td></tr>
+    <tr><td class="name">rotation</td><td>0/90/180/270, for a camera mounted sideways</td><td class="num">0</td></tr>
+    <tr><td class="name">enabled_analytics</td><td>Which of the seven run here</td><td class="num">[]</td></tr>
+    <tr><td class="name">record_evidence</td><td>Store an annotated JPEG with each event</td><td class="num">true</td></tr>
+    <tr><td class="name">privacy_blur_faces</td><td>Pixelate faces not matched to a consenting employee</td><td class="num">false</td></tr>
+  </tbody>
+</table>
+
+<div class="key">
+<h4>target_fps is not the camera's frame rate</h4>
+<p>A camera streaming 25 fps with <code>target_fps = 6</code> has five of every
+six frames discarded without analysis. Six frames a second is ample for human
+behaviour — a person cannot enter and leave a restricted zone in 160
+milliseconds — and it is the difference between two cameras per core and eight.
+Raise it only for genuinely fast events.</p>
+</div>
+
+<h2>RTSP URLs by vendor</h2>
+<p>If you know the vendor, you can skip discovery:</p>
+<pre><span class="c"># Hikvision — channel 1, main stream / sub stream</span>
+rtsp://user:pass@192.168.1.50:554/Streaming/Channels/101
+rtsp://user:pass@192.168.1.50:554/Streaming/Channels/102
+
+<span class="c"># Dahua — channel 1, subtype 0 is main, 1 is sub</span>
+rtsp://user:pass@192.168.1.50:554/cam/realmonitor?channel=1&amp;subtype=1
+
+<span class="c"># Axis</span>
+rtsp://user:pass@192.168.1.50/axis-media/media.amp
+
+<span class="c"># Generic MJPEG</span>
+http://192.168.1.50/video.mjpg</pre>
+
+<div class="warn">
+<h4>The login goes in the login boxes, not the URL</h4>
+<p>Vendors print the address as one string —
+<code>rtsp://admin:Tinos@1122@192.168.29.209:554/Streaming/Channels/501</code> —
+so that is what gets pasted, and the username and password boxes get filled in
+as well. Campy AI now splits a pasted URL apart and keeps the credentials in
+their own fields; before it did not, and dialling the camera sent
+<code>admin:pass@admin:pass</code> as the password. The camera answers
+<strong>401 Unauthorized</strong>, which looks exactly like a wrong password.</p>
+<p>Passwords containing <code>@</code>, <code>:</code> or <code>/</code> are
+percent-encoded when the URL is assembled, so they no longer have to be escaped
+by hand.</p>
+</div>
+
+<div class="note">
+<h4>Prefer the sub-stream</h4>
+<p>Analysis runs at 480&times;270 by default. Decoding a 4K main stream to throw
+away 97% of its pixels in the first step wastes a core per camera. A 704&times;576
+sub-stream costs a fraction and loses nothing the detectors use. ONVIF
+discovery picks the sub-stream automatically; when you type a URL yourself,
+pick it yourself.</p>
+</div>
+
+<h2>Testing before you commit</h2>
+<p><strong>Test connection</strong> on the camera page opens the stream, pulls up
+to five frames, and reports the resolution it received — or the specific reason
+it failed. It is the same code path the worker uses, so a camera that passes the
+test will run.</p>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 3</div>
+<h1 class="chapter">ONVIF discovery</h1><hr class="chapter-rule">
+
+<p class="lede">Every vendor invents a different RTSP path. ONVIF exists so you do
+not have to know it: give the camera its own address and credentials, and it
+tells you where its video is.</p>
+
+<h2>What happens when you press save</h2>
+<div class="steps">
+  <div class="step">
+    <h3>GetCapabilities, to the device service</h3>
+    <p>A SOAP 1.2 POST to <code>http://&lt;host&gt;:&lt;port&gt;/onvif/device_service</code>
+    asking for the Media category. The camera replies with the address of its
+    media service. Firmware that rejects the category is retried without it.</p>
+  </div>
+  <div class="step">
+    <h3>GetProfiles, to the media service</h3>
+    <p>The camera lists the streams it publishes — typically a main stream and
+    one or two sub-streams — each with a token, an encoding and a resolution.</p>
+  </div>
+  <div class="step">
+    <h3>Choose the cheapest stream still worth analysing</h3>
+    <p>The smallest profile at or above the analysis width wins. If every
+    profile is smaller than that, the largest available is used instead.</p>
+  </div>
+  <div class="step">
+    <h3>GetStreamUri, for that profile</h3>
+    <p>Asking for <code>RTP-Unicast</code> over <code>RTSP</code> returns the
+    URL. It is written back to <code>stream_url</code> so an operator can see
+    what was found, and so a restart need not ask again.</p>
+  </div>
+</div>
+
+<h2>Authentication</h2>
+<p>ONVIF never sends the password. Each request carries a WS-Security
+UsernameToken whose digest is <code>base64(sha1(nonce + created + password))</code>,
+with the nonce and the UTC timestamp alongside it so the camera can verify
+without knowing what you sent. A wrong password comes back as a SOAP fault, which
+is surfaced verbatim — <em>Sender not authorized</em> tells an installer
+something that <em>connection failed</em> does not.</p>
+
+<h2>The two quirks that break installs</h2>
+<dl class="defs">
+  <dt>A camera reports the address it thinks it has</dt>
+  <dd>Behind NAT, or on a second interface, the media-service address and the
+  RTSP URL a camera returns point at an IP you cannot reach. Campy AI rewrites
+  the host to the one it actually connected to, keeping the port and path the
+  camera specified, which are still correct.</dd>
+  <dt>The RTSP URL usually carries no credentials</dt>
+  <dd>ONVIF authenticates the SOAP call, not the stream. The same username and
+  password are injected into the returned RTSP URL — unless the camera already
+  embedded credentials, in which case its own are left alone.</dd>
+</dl>
+
+<h2>When discovery fails</h2>
+<p>A failure does not raise through the worker thread. It produces a source that
+reports the reason, so the camera is marked offline with a message an installer
+can act on, visible on the camera page and in <strong>Test connection</strong>.
+If the camera has a previously discovered URL, that is used instead — a camera
+whose ONVIF service has crashed keeps streaming.</p>
+
+<pre><span class="c"># check a camera by hand</span>
+python manage.py shell -c "\
+from apps.cameras.onvif import discover_stream_url; \
+print(discover_stream_url('192.168.1.50', 80, 'admin', 'pass'))"</pre>
+
+<div class="warn">
+<h4>ONVIF is often switched off by default</h4>
+<p>Many cameras ship with ONVIF disabled, or with a separate ONVIF user account
+that is not the web-interface account. If discovery reports
+<em>Sender not authorized</em> while the web interface accepts the same
+password, look for an ONVIF user list in the camera's own settings.</p>
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 4</div>
+<h1 class="chapter">Credentials and secrets</h1><hr class="chapter-rule">
+
+<p class="lede">A camera password is the key to a building's video. It is handled
+as such.</p>
+
+<h2>Where a password lives</h2>
+<ul>
+  <li>Username and password are stored in their own columns, never inside
+  <code>stream_url</code>.</li>
+  <li><code>connection_url</code> assembles the two at the moment of connecting.
+  It is never rendered into a template.</li>
+  <li><code>masked_url</code> is what the interface shows. Any embedded
+  credential becomes <code>rtsp://•••@host/path</code>.</li>
+  <li>Status messages and log lines pass through a redactor, so a password
+  cannot reach a log file by way of an error string.</li>
+</ul>
+
+<h2>Network posture</h2>
+<table>
+  <thead><tr><th>Direction</th><th>Traffic</th><th>Required?</th></tr></thead>
+  <tbody>
+    <tr><td>Server → camera</td><td>RTSP 554, HTTP 80, ONVIF port</td><td class="tick">Yes</td></tr>
+    <tr><td>Operator → server</td><td>HTTPS 443</td><td class="tick">Yes</td></tr>
+    <tr><td>Camera → internet</td><td>Anything</td><td class="cross">No — block it</td></tr>
+    <tr><td>Server → internet</td><td>Outbound only: payments, email, webhooks</td><td>Optional</td></tr>
+  </tbody>
+</table>
+<p>Put cameras on their own VLAN with no default route. Campy AI needs a route
+<em>to</em> them; they need no route to anything.</p>
+
+<div class="note">
+<h4>Video does not leave the deployment</h4>
+<p>There is no third-party AI service in the path. Every model runs in-process
+on the server you control. The only things that leave are the ones you configure:
+an email, a webhook, a payment to Razorpay or Stripe.</p>
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 5</div>
+<h1 class="chapter">The worker</h1><hr class="chapter-rule">
+
+<p class="lede">One worker owns one camera. It opens the stream, paces itself to
+the configured analysis rate, and keeps the camera's health honest.</p>
+
+<pre><span class="c"># one camera</span>
+python manage.py run_camera --camera &lt;uid&gt;
+
+<span class="c"># everything at one site, four threads</span>
+python manage.py run_camera --site &lt;uid&gt; --workers 4
+
+<span class="c"># a whole workspace</span>
+python manage.py run_camera --organization acme-demo
+
+<span class="c"># a bounded run, for a smoke test</span>
+python manage.py run_camera --all --max-frames 200</pre>
+
+<h2>The loop</h2>
+<ol>
+  <li>Open the source. Failure marks the camera offline with the reason.</li>
+  <li>Mark the camera online, recording which source served it.</li>
+  <li>Read a frame. Analyse it. Persist anything worth keeping.</li>
+  <li>Sleep the remainder of <code>1 / target_fps</code>, so a fast machine does
+  not run ahead of the configured rate.</li>
+</ol>
+
+<h2>What happens when a camera drops</h2>
+<p>An empty read is counted, and the wait before the next attempt grows with the
+count — 0.5 s, then 1 s, then 1.5 s, capped at 3 s. After fifteen consecutive
+empty reads the camera is marked offline and the worker exits, so a supervisor
+can restart it cleanly rather than spinning forever.</p>
+<p>Status follows failure count: the first two failures leave the camera
+<strong>degraded</strong>; the third and beyond make it <strong>offline</strong>.
+A camera is <em>healthy</em> only if it is online and delivered a frame within
+the last five minutes — which catches the case a stream stays open but stops
+sending.</p>
+
+<h2>Scaling</h2>
+<p>Each camera runs in its own thread, capped by <code>--workers</code> (default
+8). Frame decoding and NumPy both release the GIL for the bulk of their work, so
+threads do scale — but not indefinitely. Past a handful of cameras, run several
+processes and shard by site, so one crash never takes every stream down at once.</p>
+
+<pre><span class="c"># systemd, one unit per site</span>
+ExecStart=/opt/campyai/.venv/bin/python manage.py run_camera --site $SITE_UID --workers 4
+Restart=always
+RestartSec=10</pre>
+
+<h2>Reports carry their evidence</h2>
+<p>Any period downloads as a PDF — one feature alone, or all seven compared —
+from Analytics, from a filtered Events view, or from a saved report whose format
+is PDF. Each finding is printed beside the frame that produced it, the detection
+outlined and the zone it crossed drawn on top, with camera, zone, timestamp,
+confidence and identity where one was recognised.</p>
+<p>Built on ReportLab, a pure-Python wheel, because a report has to generate on
+the customer's own server — Windows included — without anyone installing system
+libraries. Evidence is best-effort: a finding whose frame has passed its
+retention window still appears, without a picture.</p>
+
+<h2>Watching a camera costs it one session</h2>
+<p>The live view does not open the camera per picture. One reader holds the
+stream open and publishes its newest frame; every viewer, on every screen,
+reads that. The camera detail page receives it as MJPEG, so the browser plays
+moving video rather than replacing a still every few seconds; the wall polls
+the same cached frame, because twenty tiles each holding a connection would pin
+twenty server threads.</p>
+<p>A camera the worker is analysing is never opened twice. The worker hands its
+decoded frames to the same slot — so the live view shows exactly the moment the
+detectors are working on, and a camera that permits only one RTSP session still
+works while being watched. Encoding is skipped entirely when nobody is looking,
+and a reader closes itself 20 seconds after the last viewer leaves.</p>
+
+<h2>Telemetry</h2>
+<p>On exit — and continuously through the pipeline's own counters — each worker
+writes frames processed, events raised, errors, achieved fps, average
+milliseconds per frame and per-stage timings onto the camera row. That is what
+the camera page and the live wall read.</p>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 6</div>
+<h1 class="chapter">One frame, end to end</h1><hr class="chapter-rule">
+
+<p class="lede">Seven analytics cost barely more than one, because the expensive
+work happens once and every analytic reads the same result.</p>
+
+<div class="steps">
+  <div class="step">
+    <h3><span>Decode and normalise</span><span class="cost">I/O bound</span></h3>
+    <p>The frame is decoded, resized to the analysis resolution
+    (480&times;270 by default) and converted to RGB. Everything downstream works
+    at this size.</p>
+  </div>
+  <div class="step">
+    <h3><span>Separate movement from the room</span><span class="cost">16.5 ms</span></h3>
+    <p>An adaptive Gaussian background model learns what the empty scene looks
+    like, per pixel, and flags what differs. Two refinements matter: a pixel
+    that has been foreground but motionless for a while is absorbed quickly, so
+    a chair somebody moved stops being "a person"; and no learning at all
+    happens inside the box of a confirmed, moving person, so somebody standing
+    still does not dissolve into the wall.</p>
+  </div>
+  <div class="step">
+    <h3><span>Find people and objects</span><span class="cost">25.0 ms</span></h3>
+    <p>Campy AI's own single-shot grid detector runs on the frame; where it is
+    unavailable or uncertain, motion-derived candidates fill in. A
+    boundary-gradient test rejects ghosts — a real object is edged by the image
+    on most of its perimeter, a vacated patch of background is not.</p>
+  </div>
+  <div class="step">
+    <h3><span>Follow them between frames</span><span class="cost">1.7 ms</span></h3>
+    <p>A Kalman filter per track over centre, area and aspect ratio; assignment
+    by the Hungarian algorithm on IoU, then a second pass on proximity so a
+    running person — whose boxes do not overlap frame to frame — stays one
+    person rather than becoming a new one each frame.</p>
+  </div>
+  <div class="step">
+    <h3><span>Run the analytics</span><span class="cost">17.7 ms</span></h3>
+    <p>Face recognition goes first, so everything after it knows <em>who</em> a
+    track is. The rest read the same motion, detections and tracks. Each one
+    only runs if the camera has it switched on <em>and</em> the workspace's plan
+    includes it.</p>
+  </div>
+  <div class="step">
+    <h3><span>Collapse repeats</span><span class="cost">negligible</span></h3>
+    <p>The same finding on consecutive frames is one finding. A dedupe key per
+    condition suppresses a repeat inside a 60-frame window — ten seconds at
+    6 fps — before anything is written.</p>
+  </div>
+  <div class="step">
+    <h3><span>Store, group and notify</span><span class="cost">after the frame</span></h3>
+    <p>Survivors become events, attach to an incident, and are offered to every
+    alert rule. Evidence is an annotated JPEG, optionally with unenrolled faces
+    pixelated.</p>
+  </div>
+</div>
+
+<div class="key">
+<h4>Why the order is fixed</h4>
+<p>Background subtraction, detection and tracking are the expensive stages, and
+they produce what every analytic needs. Running them once and sharing the result
+is the entire reason all seven analytics together cost about 40% more than the
+shared work alone, rather than seven times as much.</p>
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 7</div>
+<h1 class="chapter">The seven analytics</h1><hr class="chapter-rule">
+
+<table>
+  <thead><tr><th>Analytic</th><th>What it computes</th><th class="num">ms</th></tr></thead>
+  <tbody>
+    <tr><td class="name">Gesture</td><td>Posture and activity per track — walking, standing, sitting, bending, running, inactivity, loitering, falls. Speeds are normalised to <strong>body-heights per second</strong>, so one threshold holds at any camera distance and any frame rate.</td><td class="num">0.4</td></tr>
+    <tr><td class="name">Face</td><td>A 128-dimension unit embedding per face, matched against enrolled employees by cosine distance. Gated on recorded consent.</td><td class="num">1.7</td></tr>
+    <tr><td class="name">Geofencing</td><td>Point-in-polygon containment tested at a person's <strong>feet</strong>, not their centroid, plus dwell time, occupancy limits and per-zone schedules.</td><td class="num">&lt; 0.1</td></tr>
+    <tr><td class="name">Crowd</td><td>Headcount, local density and flow coherence — the measure that separates a busy corridor from a crush risk. Falls back to density-map regression when heads occlude.</td><td class="num">0.1</td></tr>
+    <tr><td class="name">Theft</td><td>Shelf dwell, concealment gestures, carry-change and stock disappearance combined into a decaying risk score.</td><td class="num">0.2</td></tr>
+    <tr><td class="name">Objects</td><td>Watch-list classification plus geometric abandoned-object detection — a static blob that was not part of the background and has no owner nearby.</td><td class="num">2.7</td></tr>
+    <tr><td class="name">Fire &amp; smoke</td><td>YCrCb/HSV chromatic gating, flicker variance and area growth, adjudicated by a trained classifier. Colour analysis runs at half resolution behind a cheap pre-gate.</td><td class="num">13.6</td></tr>
+  </tbody>
+</table>
+<p style="font-size:9pt;color:#7b8f8c">Milliseconds are the analytic's own stage time on a busy scene at 480&times;270,
+excluding the shared stages they all depend on.</p>
+
+<h2>The models</h2>
+<table>
+  <thead><tr><th>Model</th><th>Job</th><th class="num">Parameters</th></tr></thead>
+  <tbody>
+    <tr><td class="name">campydet</td><td>Single-shot grid detector</td><td class="num">185k</td></tr>
+    <tr><td class="name">campyface</td><td>L2-normalised identity embedding</td><td class="num">69k</td></tr>
+    <tr><td class="name">campynet</td><td>Image classifier — fire/smoke, PPE, object state</td><td class="num">45k</td></tr>
+    <tr><td class="name">campydense</td><td>Crowd density map</td><td class="num">27k</td></tr>
+    <tr><td class="name">campyseq</td><td>Temporal action model</td><td class="num">11k</td></tr>
+  </tbody>
+</table>
+<p>Small on purpose. A 45k-parameter classifier infers in about 0.7 ms, so the
+model is never the bottleneck — reading pixels is. Ten streams per core on
+ordinary hardware is worth more to a warehouse than one enormous backbone at
+0.4 fps.</p>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 8</div>
+<h1 class="chapter">Events, incidents and alerts</h1><hr class="chapter-rule">
+
+<p class="lede">An alert that fires four hundred times is worse than no alert.
+Three independent layers stand between a detection and somebody's phone.</p>
+
+<h2>Layer one — the pipeline dedupes</h2>
+<p>Inside a single camera's pipeline, the same condition is suppressed for 60
+frames after it first appears. At 6 fps that is ten seconds.</p>
+
+<h2>Layer two — the event record counts repeats</h2>
+<p>When an event is written, a matching event on the same camera within the last
+<strong>180 seconds</strong> is not duplicated: its <code>occurrence_count</code>
+increments and its <code>last_seen_at</code> moves. One row, a counter, no new
+notification.</p>
+
+<h2>Layer three — the alert rule decides</h2>
+<table>
+  <thead><tr><th>Control</th><th>Effect</th><th>Default</th></tr></thead>
+  <tbody>
+    <tr><td class="name">min_severity</td><td>Ignore anything below this level</td><td class="num">medium</td></tr>
+    <tr><td class="name">min_confidence</td><td>Ignore anything the detector was unsure of</td><td class="num">0.5</td></tr>
+    <tr><td class="name">cooldown_seconds</td><td>After firing, stay silent this long</td><td class="num">300</td></tr>
+    <tr><td class="name">threshold_count</td><td>Require this many matches before firing at all</td><td class="num">1</td></tr>
+    <tr><td class="name">threshold_window_seconds</td><td>…within this window</td><td class="num">300</td></tr>
+    <tr><td class="name">active_schedule</td><td>Only during these days and hours — e.g. after-hours only</td><td class="num">always</td></tr>
+    <tr><td class="name">escalate_after_seconds</td><td>Unacknowledged this long → escalation channels</td><td class="num">off</td></tr>
+  </tbody>
+</table>
+<p>Rules are scoped by analytic, event type, site, camera and zone, and evaluated
+in priority order. Delivery goes to email, webhook, Slack, Telegram, SMS or
+in-app. A delivery failure is caught and logged — it never stops analysis.</p>
+
+<h2>Incidents</h2>
+<p>Related events group into one incident, so a person crossing three zones is
+one thing to review rather than three. Incidents carry the status an operator
+actually works: open, acknowledged, resolved, false alarm.</p>
+
+<div class="note">
+<h4>A false alarm is training data</h4>
+<p>Marking an event a false alarm does more than close it. That frame can be
+pushed into a dataset as a hard negative and trained out, so the same mistake
+stops recurring. This is the loop that makes the system quieter over time
+instead of noisier.</p>
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 9</div>
+<h1 class="chapter">Zones</h1><hr class="chapter-rule">
+
+<p class="lede">A zone is a polygon drawn over the camera image, stored in
+relative coordinates so it survives a change of stream resolution.</p>
+
+<table>
+  <thead><tr><th>Kind</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td class="name">Restricted</td><td>Nobody should be here — or only the listed roles</td></tr>
+    <tr><td class="name">Hazard</td><td>Dangerous: machinery, chemicals, a loading edge</td></tr>
+    <tr><td class="name">Monitored</td><td>Watch it, but presence alone is not an event</td></tr>
+    <tr><td class="name">Counting</td><td>Occupancy and flow through this area</td></tr>
+    <tr><td class="name">Shelf</td><td>Stock area, watched by theft detection</td></tr>
+    <tr><td class="name">Exclusion</td><td>Ignore this area entirely — a doorway to a public street, a TV screen</td></tr>
+  </tbody>
+</table>
+
+<h2>Details that decide whether a geofence is usable</h2>
+<dl class="defs">
+  <dt>Coordinates are relative</dt>
+  <dd>Stored as <code>[[x, y], …]</code> in the range 0–1. Swap the camera for a
+  higher-resolution model, or switch from main to sub-stream, and the zone still
+  covers the same part of the room.</dd>
+  <dt>Containment tests the feet</dt>
+  <dd>A person is "inside" when the bottom-centre of their box is inside the
+  polygon. Testing the centroid would count someone leaning over a line as
+  having crossed it — the single most common source of false geofence alerts.</dd>
+  <dt>Zones carry their own schedule</dt>
+  <dd>A machine bay can be restricted between 18:00 and 07:00 and ordinary
+  during a shift, without a second zone or a second rule.</dd>
+  <dt>Dwell before alert</dt>
+  <dd><code>min_dwell_seconds</code> of 0 alerts on entry. Set it to 5 and
+  somebody walking past the edge of a zone is not an incident.</dd>
+  <dt>Occupancy limits</dt>
+  <dd><code>max_occupancy</code> turns a counting zone into a crowd rule: alert
+  when more than N people are inside.</dd>
+</dl>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 10</div>
+<h1 class="chapter">Capacity planning</h1><hr class="chapter-rule">
+
+<p class="lede">Do not size a server from a number in a document — including this
+one. Measure the machine you will deploy on.</p>
+
+<pre>python manage.py benchmark
+python manage.py benchmark --width 320 --height 180
+python manage.py benchmark --analytics gesture,geofence,fire</pre>
+
+<p>It runs the real pipeline over scenes of rising difficulty and prints
+milliseconds per frame, frames per second per core, and cameras per core at your
+configured analysis rate.</p>
+
+<h2>Measured: one core of a 2.1 GHz Xeon, all seven analytics, 480&times;270</h2>
+<table>
+  <thead><tr><th>Scene</th><th class="num">ms/frame</th><th class="num">fps/core</th><th class="num">Cameras/core @ 6 fps</th></tr></thead>
+  <tbody>
+    <tr><td>Empty room</td><td class="num">50</td><td class="num">20</td><td class="num">3.3</td></tr>
+    <tr><td>One person walking</td><td class="num">50</td><td class="num">20</td><td class="num">3.3</td></tr>
+    <tr><td>Six people moving</td><td class="num">73</td><td class="num">14</td><td class="num">2.3</td></tr>
+    <tr><td>Fourteen people</td><td class="num">64</td><td class="num">16</td><td class="num">2.6</td></tr>
+  </tbody>
+</table>
+
+<div class="key">
+<h4>Plan for the busy case</h4>
+<p><strong>Two to three cameras per core</strong> with everything switched on. A
+site that is quiet at 03:00 is not the case that matters; the case that matters
+is the shift change, when the corridor is full and every analytic has work to do.</p>
+</div>
+
+<h2>The two dials that actually change the answer</h2>
+<p><strong>Analysis resolution.</strong> Cost is roughly quadratic. At
+320&times;180 the same seven analytics run in 22 ms on a quiet camera and 36 ms
+on a busy one — about five to seven cameras per core. Set
+<code>CAMPY_WORKER_FRAME_WIDTH</code> and <code>CAMPY_WORKER_FRAME_HEIGHT</code>.
+Below roughly 320 across, small or distant people stop being detectable at all.</p>
+<p><strong>Which analytics are on.</strong> Fire and smoke is the most expensive
+single analytic at 13.6 ms. Geofencing, crowd and theft are nearly free once
+tracking has run. A camera with gesture, geofencing and fire costs 41 ms on a
+quiet scene and 61 ms on a busy one. A camera watching a corridor does not need
+theft detection; a camera over a stockroom does not need crowd analysis.</p>
+
+<h2>A worked example</h2>
+<p>Forty cameras, all seven analytics, 6 fps, busy site:
+40 ÷ 2.3 ≈ <strong>18 cores</strong>. Reduce to 320&times;180 and it is about
+9 cores. Give half the cameras only the two analytics they need and it drops
+again. Storage is dominated by evidence snapshots — budget from
+<code>SNAPSHOT_RETENTION_DAYS</code> (30 by default) multiplied by your event
+rate, not by video, since Campy AI stores stills and not footage.</p>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 11</div>
+<h1 class="chapter">Training your own models</h1><hr class="chapter-rule">
+
+<p class="lede">The AI is ours end to end — architecture, gradients, optimisers,
+training loop, weights format and inference runtime, all in NumPy. That is what
+makes in-product training honest: the weights a customer trains are a file on
+their own disk.</p>
+
+<div class="steps">
+  <div class="step">
+    <h3>Build a dataset</h3>
+    <p>Upload frames, harvest them from a camera, or import alerts an operator
+    dismissed as false. The last of these is the most valuable source you have —
+    it is labelled by the people who know the site.</p>
+  </div>
+  <div class="step">
+    <h3>Label in the browser</h3>
+    <p>Classification, detection boxes or embedding identities, depending on the
+    task. The dataset page says plainly when a class has too few examples to
+    train on rather than letting you start a job that cannot work.</p>
+  </div>
+  <div class="step">
+    <h3>Train</h3>
+    <p>Pick the architecture slot, epochs and learning schedule. The learning
+    curve and the epoch log update live. A small fire classifier reaches useful
+    accuracy in seconds; a face embedding takes longer.</p>
+  </div>
+  <div class="step">
+    <h3>Deploy or roll back</h3>
+    <p>Each slot holds many versions with their scores. Deploying one retires
+    the previous in the same transaction, so a slot is never briefly empty.
+    Rollback is the same action in reverse.</p>
+  </div>
+</div>
+
+<h2>Why every gradient is verified</h2>
+<p>A wrong backward pass does not crash. It quietly trains a worse model, and you
+find out months later from an accuracy number nobody can explain. So each layer's
+derivative is checked against float64 central differences, with the framework's
+working precision switched for the test — a float32 step of 1e-6 cannot represent
+the difference being measured, which makes the naive version of this check fail
+on correct code.</p>
+
+<pre>python manage.py train_base_models        <span class="c"># train and register the shipped models</span>
+pytest apps/aiengine/tests/test_gradients.py  <span class="c"># prove the derivatives</span></pre>
+
+</section>
+
+<!-- ===================================================== -->
+<section class="chapter">
+<div class="eyebrow">Chapter 12</div>
+<h1 class="chapter">Operations</h1><hr class="chapter-rule">
+
+<h2>Troubleshooting, by symptom</h2>
+<table>
+  <thead><tr><th>Symptom</th><th>Most likely cause</th><th>What to do</th></tr></thead>
+  <tbody>
+    <tr><td>Test connection fails immediately</td><td>Wrong URL, wrong port, or no route</td><td>Ping the camera from the server. Open the URL in VLC from the same machine.</td></tr>
+    <tr><td><em>Sender not authorized</em></td><td>ONVIF is disabled, or uses a separate account</td><td>Check the camera's own ONVIF user list.</td></tr>
+    <tr><td><em>401 Unauthorized</em> in the log</td><td>A wrong password — or a login supplied twice</td><td>Put the credentials in the username and password fields and leave them out of the URL. <strong>Test connection</strong> now names the reason: rejected login, wrong channel, or no route.</td></tr>
+    <tr><td>Connects, then no frames</td><td>Stream opened but the camera is not sending</td><td>Try the sub-stream. Some cameras allow only two concurrent sessions.</td></tr>
+    <tr><td>Camera flaps online/offline</td><td>Network loss, or too many concurrent RTSP sessions</td><td>Reduce concurrent viewers; check switch and cabling.</td></tr>
+    <tr><td>Achieved fps far below target</td><td>Not enough CPU for the number of cameras</td><td>Run <code>benchmark</code>; lower resolution, disable unneeded analytics, or add cores.</td></tr>
+    <tr><td>Everything is an event</td><td>Thresholds too low, or a zone covering a public area</td><td>Raise <code>min_dwell_seconds</code>, add an exclusion zone, raise <code>min_confidence</code>.</td></tr>
+    <tr><td>Ghost people that never move</td><td>Background still settling after a scene change</td><td>Wait for the model to re-learn; it absorbs settled pixels quickly by design.</td></tr>
+    <tr><td>Nothing is detected at all</td><td>Analysis resolution too low, or camera too far</td><td>People need roughly 40 px of height. Raise resolution or move the camera.</td></tr>
+  </tbody>
+</table>
+
+<h2>What to monitor</h2>
+<ul>
+  <li><code>/healthz</code> for liveness.</li>
+  <li>Cameras not <em>healthy</em> — online, but no frame in five minutes.</li>
+  <li>Achieved fps against <code>target_fps</code> per camera. A persistent gap
+  means the box is oversubscribed.</li>
+  <li>Events per camera per hour. A sudden rise is usually a scene change, not a
+  crime wave.</li>
+  <li>Disk. Evidence snapshots dominate; retention is 30 days by default.</li>
+</ul>
+
+<h2>Deployment checklist</h2>
+<ul>
+  <li>PostgreSQL, not SQLite, for anything beyond evaluation.</li>
+  <li>Redis and Celery if you want notification delivery off the frame path.</li>
+  <li>Cameras on their own VLAN, no default route.</li>
+  <li>HTTPS in front of the web tier; the worker needs no inbound port.</li>
+  <li>One worker process per site, supervised, with <code>Restart=always</code>.</li>
+  <li><code>python manage.py benchmark</code> on the real hardware before
+  committing to a camera count.</li>
+</ul>
+
+</section>
+
+</body></html>

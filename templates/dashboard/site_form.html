@@ -1,0 +1,29 @@
+{% extends "dashboard/base.html" %}
+{% block page_title %}{% if site %}Edit site{% else %}Add site{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="breadcrumbs"><a href="{% url 'dashboard:sites' %}">Sites</a> <span>/</span> <span>{% if site %}{{ site.name }}{% else %}New{% endif %}</span></div>
+  <h1>{% if site %}Edit {{ site.name }}{% else %}Add a site{% endif %}</h1>
+  <p class="subtitle">A site groups the cameras at one physical location.</p>
+</div>
+<div class="card" style="max-width:820px">
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="form-grid">
+        {% for field in form %}
+          {% if field.name in "description,address" %}
+            <div class="full">{% include "partials/form_field.html" with field=field %}</div>
+          {% else %}
+            {% include "partials/form_field.html" with field=field %}
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="row">
+        <button type="submit" class="btn btn-primary">Save site</button>
+        <a href="{% url 'dashboard:sites' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

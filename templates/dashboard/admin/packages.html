@@ -1,0 +1,44 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+{% block page_title %}Packages{% endblock %}
+{% block topbar_actions %}<a href="{% url 'dashboard:admin_package_create' %}" class="btn btn-sm btn-primary">＋ New package</a>{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Packages &amp; pricing</h1><p class="subtitle">What Campy AI sells, and what each plan unlocks.</p></div>
+<div class="card">
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Package</th><th>Price (INR)</th><th>Price (USD)</th><th>Interval</th><th>Analytics</th><th>Cameras</th><th>Subscribers</th><th>Visibility</th><th class="right"></th></tr></thead>
+      <tbody>
+        {% for package in packages %}
+        <tr>
+          <td>
+            <div class="row row-tight">
+              <span class="dot" style="color:{{ package.colour }}"></span>
+              <div>
+                <span class="semibold">{{ package.name }}</span>
+                {% if package.is_featured %}<span class="pill pill-accent tiny">Featured</span>{% endif %}
+                <div class="tiny dim">{{ package.tagline|truncatechars:48 }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="numeric">₹{{ package.price_inr|floatformat:0|intcomma }}</td>
+          <td class="numeric">${{ package.price_usd|floatformat:0|intcomma }}</td>
+          <td class="small">{{ package.get_interval_display }}</td>
+          <td class="numeric">{{ package.analytics_count }}/7</td>
+          <td class="numeric">{{ package.quota_label }}{{ package.quotas.cameras|default:0 }}</td>
+          <td class="numeric semibold">{{ package.live_subs }}</td>
+          <td>{% if package.is_active %}{{ package.audience|status_pill }}{% else %}<span class="pill pill-muted">Inactive</span>{% endif %}</td>
+          <td class="actions"><a href="{% url 'dashboard:admin_package_edit' package.slug %}" class="btn btn-sm btn-ghost">Edit</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9"><div class="empty">
+          <div class="empty-icon" aria-hidden="true">◫</div><h3>No packages yet</h3>
+          <p>Define at least one so customers have something to sign up to.</p>
+          <a href="{% url 'dashboard:admin_package_create' %}" class="btn btn-primary" style="margin-top:var(--sp-4)">Create a package</a>
+        </div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" role="img" aria-label="Campy AI">
+  <defs>
+    <linearGradient id="campyGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="55%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <!-- Mark: a camera aperture whose iris is an AI focus reticle -->
+  <g transform="translate(4,8)">
+    <rect x="0" y="0" width="48" height="48" rx="14" fill="url(#campyGrad)"/>
+    <circle cx="24" cy="24" r="13.5" fill="none" stroke="#ffffff" stroke-width="2.6" opacity="0.95"/>
+    <circle cx="24" cy="24" r="5" fill="#ffffff"/>
+    <g stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" opacity="0.95">
+      <path d="M24 4.5v5"/><path d="M24 38.5v5"/>
+      <path d="M4.5 24h5"/><path d="M38.5 24h5"/>
+    </g>
+  </g>
+  <text x="66" y="41" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="27" font-weight="700" fill="#0f172a" letter-spacing="-0.6">Campy</text>
+  <text x="176" y="41" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="27" font-weight="700" fill="url(#campyGrad)" letter-spacing="-0.4">AI</text>
+</svg>
